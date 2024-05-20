@@ -7,11 +7,12 @@ public final class ApplicationMain {
 
     public static void main(String[] args) {
 
-        Thread gossipThread = new Thread(new GossipScheduledTask());
-
-        gossipThread.setName("GossipScheduledTask");
-        gossipThread.setDaemon(true);
-        gossipThread.start();
+        // TODO: temporary disabled
+        //        Thread gossipThread = new Thread(new GossipScheduledTask());
+        //
+        //        gossipThread.setName("GossipScheduledTask");
+        //        gossipThread.setDaemon(true);
+        //        gossipThread.start();
 
         if (args.length < 1) {
             System.err.println("Port value should be passed as a command line argument");

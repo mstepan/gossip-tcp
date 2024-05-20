@@ -1,7 +1,7 @@
 package github.com.mstepan.gossip.server;
 
 import github.com.mstepan.gossip.command.GossipCommandType;
-import github.com.mstepan.gossip.util.IOUtils;
+import github.com.mstepan.gossip.util.NetworkUtils;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -32,12 +32,29 @@ final class TcpConversationHandler implements Runnable {
 
                 // Construct Gossip command from raw bytes
                 GossipCommandType gossipCommandType = GossipCommandType.fromBytes(commandRawBytes);
-                System.out.printf("Command: %s%n", gossipCommandType);
+
+                switch (gossipCommandType) {
+                    case SYN:
+                        {
+                            System.out.println("SYN");
+                            break;
+                        }
+                    case ACK:
+                        {
+                            System.out.println("ACK");
+                            break;
+                        }
+                    case ACK_SYN:
+                        {
+                            System.out.println("ACK_SYN");
+                            break;
+                        }
+                }
             }
         } catch (IOException ioEx) {
             System.err.println(ioEx.getMessage());
         } finally {
-            IOUtils.close(clientSocket);
+            NetworkUtils.close(clientSocket);
         }
     }
 }

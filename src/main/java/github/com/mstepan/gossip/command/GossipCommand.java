@@ -1,3 +1,8 @@
 package github.com.mstepan.gossip.command;
 
-public class GossipCommand {}
+public interface GossipCommand {
+
+    GossipCommand fromBytes(byte[] rawData);
+
+    byte[] toBytes();
+}

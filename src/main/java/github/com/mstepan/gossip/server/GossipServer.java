@@ -1,5 +1,7 @@
 package github.com.mstepan.gossip.server;
 
+import github.com.mstepan.gossip.util.NetworkUtils;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -20,7 +22,7 @@ public final class GossipServer {
 
     public void startAndWaitForShutdown() {
 
-        final InetAddress address = getHostAddress();
+        final InetAddress address = NetworkUtils.getHostAddress();
 
         System.out.printf(
                 "Server started at '%s:%d' (TCP)%n", address.getCanonicalHostName(), port);
@@ -42,12 +44,5 @@ public final class GossipServer {
         }
     }
 
-    private static InetAddress getHostAddress() {
-        try {
-            return InetAddress.getLocalHost();
-        } catch (UnknownHostException ex) {
-            throw new IllegalStateException(
-                    "Can't get localhost InetAddress: %s".formatted(ex.getMessage()));
-        }
-    }
+
 }

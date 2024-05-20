@@ -15,6 +15,10 @@ public enum GossipCommandType {
         this.tag = tag;
     }
 
+    public short tag() {
+        return tag;
+    }
+
     /** Create Gossip command from raw bytes array. */
     public static GossipCommandType fromBytes(byte[] rawData) {
         try (DataInputStream dataIn = new DataInputStream(new ByteArrayInputStream(rawData))) {
