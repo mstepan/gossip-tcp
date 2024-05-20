@@ -1,49 +1,28 @@
 package github.com.mstepan.gossip.command;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
+import java.util.Optional;
 
 public enum GossipCommandType {
-    SYN((short) 0x00_01),
-    ACK((short) 0x00_02),
-    ACK_SYN((short) 0x00_03);
+    SYN(0x01),
+    ACK(0x02),
+    ACK2(0x03);
 
-    private final short tag;
+    private final int tag;
 
-    GossipCommandType(short tag) {
+    GossipCommandType(int tag) {
         this.tag = tag;
     }
 
-    public short tag() {
+    public int tag() {
         return tag;
     }
 
-    /** Create Gossip command from raw bytes array. */
-    public static GossipCommandType fromBytes(byte[] rawData) {
-        try (DataInputStream dataIn = new DataInputStream(new ByteArrayInputStream(rawData))) {
-            short tag = dataIn.readShort();
-
-            GossipCommandType gossipCommandType = findByTag(tag);
-
-            if (gossipCommandType == null) {
-                throw new IllegalStateException(
-                        "Can't find Gossip command for tag: %d".formatted(tag));
-            }
-
-            return gossipCommandType;
-        } catch (IOException ioEx) {
-            // I/O exception won't be thrown here b/c we use in-memory array of bytes as a stream
-            throw new IllegalStateException(ioEx);
-        }
-    }
-
-    private static GossipCommandType findByTag(short tag) {
+    public static Optional<GossipCommandType> findByTag(int tag) {
         for (GossipCommandType singleCommand : GossipCommandType.values()) {
             if (singleCommand.tag == tag) {
-                return singleCommand;
+                return Optional.of(singleCommand);
             }
         }
-        return null;
+        return Optional.empty();
     }
 }

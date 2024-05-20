@@ -1,6 +1,5 @@
 package github.com.mstepan.gossip;
 
-import github.com.mstepan.gossip.server.GossipScheduledTask;
 import github.com.mstepan.gossip.server.GossipServer;
 
 public final class ApplicationMain {

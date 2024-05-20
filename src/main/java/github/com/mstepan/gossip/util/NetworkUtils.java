@@ -3,7 +3,6 @@ package github.com.mstepan.gossip.util;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.net.UnknownHostException;
 
 public final class NetworkUtils {
@@ -28,7 +27,7 @@ public final class NetworkUtils {
             return InetAddress.getLocalHost();
         } catch (UnknownHostException ex) {
             throw new IllegalStateException(
-                "Can't get localhost InetAddress: %s".formatted(ex.getMessage()));
+                    "Can't get localhost InetAddress: %s".formatted(ex.getMessage()));
         }
     }
 }

@@ -15,13 +15,13 @@ public final class DataOut implements AutoCloseable {
                         Objects.requireNonNull(originalStream, "'originalStream' can't be null"));
     }
 
-    public void writeShort(int value) {
-        try {
-            originalStream.writeShort(value);
-        } catch (IOException ioEx) {
-            throw new IllegalStateException(ioEx);
-        }
-    }
+    //    public void writeShort(short value) {
+    //        try {
+    //            originalStream.writeShort(value);
+    //        } catch (IOException ioEx) {
+    //            throw new IllegalStateException(ioEx);
+    //        }
+    //    }
 
     public void writeInt(int value) {
         try {
@@ -43,6 +43,14 @@ public final class DataOut implements AutoCloseable {
         try {
             originalStream.writeInt(str.length());
             originalStream.writeBytes(str);
+        } catch (IOException ioEx) {
+            throw new IllegalStateException(ioEx);
+        }
+    }
+
+    public void writeBytes(byte[] arr) {
+        try {
+            originalStream.write(arr);
         } catch (IOException ioEx) {
             throw new IllegalStateException(ioEx);
         }
