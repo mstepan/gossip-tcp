@@ -1,4 +1,4 @@
-package github.com.mstepan.gossip;
+package github.com.mstepan.gossip.server;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -8,18 +8,19 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public final class ServerMain {
+public final class GossipServer {
 
     private static final int TCP_QUEUE_SIZE = 1024;
 
-    public static void main(String[] args) {
-        if (args.length < 1) {
-            System.err.println("Port value should be passed as a command line argument");
-            return;
-        }
+    private final int port;
+
+    public GossipServer(int port) {
+        this.port = port;
+    }
+
+    public void startAndWaitForShutdown() {
 
         final InetAddress address = getHostAddress();
-        final int port = Integer.parseInt(args[0]);
 
         System.out.printf(
                 "Server started at '%s:%d' (TCP)%n", address.getCanonicalHostName(), port);
@@ -37,11 +38,8 @@ public final class ServerMain {
                 }
             }
         } catch (IOException ioEx) {
-            System.err.printf("Error occurred: %s%n", ioEx.getMessage());
-            return;
+            throw new IllegalStateException(ioEx);
         }
-
-        System.out.println("Main completed...");
     }
 
     private static InetAddress getHostAddress() {

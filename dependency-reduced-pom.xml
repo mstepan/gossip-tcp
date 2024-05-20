@@ -86,7 +86,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>github.com.mstepan.gossip.ServerMain</mainClass>
+                  <mainClass>github.com.mstepan.gossip.ApplicationMain</mainClass>
                 </transformer>
               </transformers>
             </configuration>
