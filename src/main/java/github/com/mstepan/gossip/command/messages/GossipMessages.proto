@@ -7,13 +7,22 @@ option java_multiple_files = true;
 
 option java_package = "github.com.mstepan.gossip.command.digest";
 
-enum Type {
-  SYN = 0;
-  ACK = 1;
-  ACK2 = 2;
+//enum GossipMessageType {
+//  SYN = 0;
+//  ACK = 1;
+//  ACK2 = 2;
+//}
+
+message WrapperMessage {
+//  GossipMessageType tag = 1;
+  oneof msg {
+    SynMessage digest = 2;
+    AckMessage ack = 3;
+    Ack2Message ack2 = 4;
+  }
 }
 
-message Digest {
+message SynMessage {
   repeated DigestLine digests = 1;
 }
 
@@ -22,4 +31,10 @@ message DigestLine {
   uint32 port = 2;
   uint64 generation = 3;
   uint64 heartbit = 4;
+}
+
+message AckMessage {
+}
+
+message Ack2Message {
 }

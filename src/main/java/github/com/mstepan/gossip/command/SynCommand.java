@@ -3,11 +3,11 @@ package github.com.mstepan.gossip.command;
 import java.util.Iterator;
 import java.util.List;
 
-public class SyncCommand implements GossipCommand {
+public class SynCommand implements GossipCommand {
 
     private final List<SyncLineInfo> digest;
 
-    public SyncCommand(List<SyncLineInfo> digest) {
+    public SynCommand(List<SyncLineInfo> digest) {
         this.digest = digest;
     }
 

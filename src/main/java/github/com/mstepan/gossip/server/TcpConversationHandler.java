@@ -1,6 +1,7 @@
 package github.com.mstepan.gossip.server;
 
-import github.com.mstepan.gossip.command.digest.Digest;
+import github.com.mstepan.gossip.command.digest.SynMessage;
+import github.com.mstepan.gossip.command.digest.WrapperMessage;
 import github.com.mstepan.gossip.util.NetworkUtils;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -21,9 +22,21 @@ final class TcpConversationHandler implements Runnable {
             try (InputStream in = clientSocket.getInputStream();
                     BufferedInputStream bufferedIn = new BufferedInputStream(in)) {
 
-                Digest digest = Digest.newBuilder().mergeFrom(bufferedIn).build();
+                WrapperMessage message = WrapperMessage.newBuilder().mergeFrom(bufferedIn).build();
 
-                System.out.printf("Received digest: %s%n", digest);
+                if (message.hasDigest()) {
+                    // handle SYN
+                    SynMessage synMessage = message.getDigest();
+                    System.out.printf("Received digest: %s%n", synMessage);
+                } else if (message.hasAck()) {
+                    // handle ACK
+                    // TODO:
+                } else if (message.hasAck2()) {
+                    // handle ACK2
+                    // TODO:
+                } else {
+                    System.out.println("Undefined message received");
+                }
             }
         } catch (IOException ioEx) {
             System.err.println(ioEx.getMessage());
