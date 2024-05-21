@@ -36,7 +36,7 @@ final class TcpConversationHandler implements Runnable {
 
                 System.out.printf(
                         "Command received: %s, with body: %s%n",
-                        command.type(), command.toString());
+                        command.type(), command);
             }
         } catch (IOException ioEx) {
             System.err.println(ioEx.getMessage());

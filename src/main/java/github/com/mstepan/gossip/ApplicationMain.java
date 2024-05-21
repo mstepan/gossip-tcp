@@ -1,17 +1,13 @@
 package github.com.mstepan.gossip;
 
+import github.com.mstepan.gossip.server.GossipScheduledTask;
 import github.com.mstepan.gossip.server.GossipServer;
 
 public final class ApplicationMain {
 
     public static void main(String[] args) {
-
-        // TODO: temporary disabled
-        //        Thread gossipThread = new Thread(new GossipScheduledTask());
-        //
-        //        gossipThread.setName("GossipScheduledTask");
-        //        gossipThread.setDaemon(true);
-        //        gossipThread.start();
+        Thread gossipThread = GossipScheduledTask.createThread();
+        gossipThread.start();
 
         if (args.length < 1) {
             System.err.println("Port value should be passed as a command line argument");

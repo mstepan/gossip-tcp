@@ -36,8 +36,15 @@ public class GossipClient {
                         new SyncCommand(
                                 List.of(
                                         new SyncLineInfo(
-                                                "192.168.1.1", 5001, Instant.now().getEpochSecond(), 123L),
-                                        new SyncLineInfo("192.168.1.1", 5002, Instant.now().getEpochSecond(), 124L)));
+                                                "192.168.1.1",
+                                                5001,
+                                                Instant.now().getEpochSecond(),
+                                                123L),
+                                        new SyncLineInfo(
+                                                "192.168.1.1",
+                                                5002,
+                                                Instant.now().getEpochSecond(),
+                                                124L)));
 
                 byte[] rawSyncCommand = syncCommand.toBytes();
 
