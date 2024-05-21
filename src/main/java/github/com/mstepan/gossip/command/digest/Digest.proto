@@ -1,0 +1,25 @@
+//
+// As reference use https://github.com/grpc/grpc-java/blob/master/examples/example-hostname/src/main/proto/helloworld/helloworld.proto
+//
+syntax = "proto3";
+option optimize_for = CODE_SIZE;
+option java_multiple_files = true;
+
+option java_package = "github.com.mstepan.gossip.command.digest";
+
+enum Type {
+  SYN = 0;
+  ACK = 1;
+  ACK2 = 2;
+}
+
+message Digest {
+  repeated DigestLine digests = 1;
+}
+
+message DigestLine {
+  string host = 1;
+  uint32 port = 2;
+  uint64 generation = 3;
+  uint64 heartbit = 4;
+}

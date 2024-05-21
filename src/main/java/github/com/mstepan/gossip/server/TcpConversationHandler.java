@@ -1,8 +1,6 @@
 package github.com.mstepan.gossip.server;
 
-import github.com.mstepan.gossip.command.GossipCommand;
-import github.com.mstepan.gossip.command.GossipCommandFactory;
-import github.com.mstepan.gossip.util.DataIn;
+import github.com.mstepan.gossip.command.digest.Digest;
 import github.com.mstepan.gossip.util.NetworkUtils;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -21,22 +19,11 @@ final class TcpConversationHandler implements Runnable {
     public void run() {
         try {
             try (InputStream in = clientSocket.getInputStream();
-                    BufferedInputStream bufferedIn = new BufferedInputStream(in);
-                    DataIn dataIn = new DataIn(bufferedIn)) {
+                    BufferedInputStream bufferedIn = new BufferedInputStream(in)) {
 
-                // Read message length
-                int messageLength = dataIn.readInt();
+                Digest digest = Digest.newBuilder().mergeFrom(bufferedIn).build();
 
-                // Read all bytes of a message
-                byte[] commandRawBytes = new byte[messageLength];
-                dataIn.readBytes(commandRawBytes);
-
-                GossipCommandFactory factory = new GossipCommandFactory();
-                GossipCommand command = factory.newInstance(commandRawBytes);
-
-                System.out.printf(
-                        "Command received: %s, with body: %s%n",
-                        command.type(), command);
+                System.out.printf("Received digest: %s%n", digest);
             }
         } catch (IOException ioEx) {
             System.err.println(ioEx.getMessage());

@@ -13,8 +13,10 @@
 
         <!-- dependencies -->
         <assertj.version>3.15.0</assertj.version>
+        <grpc.version>1.64.0</grpc.version>
         <junit.bom.version>5.5.2</junit.bom.version>
         <mockito-version>2.21.0</mockito-version>
+        <protoc.version>3.25.1</protoc.version>
 
         <!-- maven plugins -->
         <compiler.plugin.version>3.11.0</compiler.plugin.version>
@@ -24,9 +26,41 @@
     </properties>
 
     <build>
-
+        <!--
+        Required for below protobuf compiler. Will set properties such as '${os.detected.classifier}'
+        Reference: https://github.com/trustin/os-maven-plugin
+        -->
+        <extensions>
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.1</version>
+            </extension>
+        </extensions>
 
         <plugins>
+            <!-- protobuf compiler -->
+            <plugin>
+                <groupId>org.xolstice.maven.plugins</groupId>
+                <artifactId>protobuf-maven-plugin</artifactId>
+                <version>0.6.1</version>
+                <configuration>
+                    <protocArtifact>com.google.protobuf:protoc:${protoc.version}:exe:${os.detected.classifier}
+                    </protocArtifact>
+                    <pluginId>grpc-java</pluginId>
+                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}
+                    </pluginArtifact>
+                    <protoSourceRoot>src/main/java</protoSourceRoot>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>compile-custom</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
             <!-- Spotless is a general-purpose formatting plugin. It is completely Ã la carte,
           but also includes powerful "batteries-included" if you opt-in
@@ -164,6 +198,13 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-bom</artifactId>
+                <version>${grpc.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
                 <version>${junit.bom.version}</version>
@@ -174,6 +215,11 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- grpc protobuf dependency -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+        </dependency>
 
         <!-- Test dependencies -->
         <dependency>
@@ -198,7 +244,6 @@
             <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
 </project>

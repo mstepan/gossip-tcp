@@ -7,7 +7,9 @@ public final class ApplicationMain {
 
     public static void main(String[] args) {
         Thread gossipThread = GossipScheduledTask.createThread();
-        gossipThread.start();
+
+        // TODO: temporary disabled
+        // gossipThread.start();
 
         if (args.length < 1) {
             System.err.println("Port value should be passed as a command line argument");
