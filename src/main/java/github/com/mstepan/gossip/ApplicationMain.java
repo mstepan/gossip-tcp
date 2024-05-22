@@ -2,6 +2,7 @@ package github.com.mstepan.gossip;
 
 import github.com.mstepan.gossip.server.GossipScheduledTask;
 import github.com.mstepan.gossip.server.GossipServer;
+import java.util.List;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
@@ -10,7 +11,7 @@ import picocli.CommandLine;
         mixinStandardHelpOptions = true,
         version = "gossip-tcp 0.0.1",
         description = "Start Gossip node.")
-class ApplicationMain implements Callable<Integer> {
+final class ApplicationMain implements Callable<Integer> {
 
     @CommandLine.Option(
             names = {"-p", "--port"},
@@ -21,10 +22,18 @@ class ApplicationMain implements Callable<Integer> {
     @CommandLine.Option(
             names = {"-g", "--gossip"},
             description = "Start Gossip broadcasting immediately.")
-    private boolean startGossipConversation = false;
+    private boolean startGossipConversation;
+
+    @CommandLine.Option(
+            names = {"-s", "--seeds"},
+            required = true,
+            description = "Specify list of seed nodes.")
+    List<String> seeds;
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
+        System.out.printf("Initial seeds: %s%n", seeds);
+
         Thread gossipThread = GossipScheduledTask.createThread();
 
         if (startGossipConversation) {
