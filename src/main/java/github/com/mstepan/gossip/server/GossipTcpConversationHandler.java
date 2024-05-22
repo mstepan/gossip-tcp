@@ -27,7 +27,7 @@ final class GossipTcpConversationHandler implements Runnable {
                 if (message.hasSynRequest()) {
                     // handle SYN
                     SynRequest synRequest = message.getSynRequest();
-                    System.out.printf("SYN request received: %s%n", synRequest);
+//                    System.out.printf("SYN request received: %s%n", synRequest);
                 } else if (message.hasAckRequest()) {
                     // handle ACK
                     // TODO:
