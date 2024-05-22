@@ -1,6 +1,6 @@
 package github.com.mstepan.gossip.state;
 
-public enum NodeType {
+public enum HostType {
     SEED,
     NORMAL;
 }

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Tracks gossip node state and associated metadata. Should be thread-safe. We will leverage
+ * Tracks gossip host state and associated metadata. Should be thread-safe. We will leverage
  * enum-singleton to prevent the instantiation of multiple instances of this class.
  */
 public enum NodeGlobalState {
@@ -26,45 +26,45 @@ public enum NodeGlobalState {
         endpoints = new HashMap<>();
     }
 
-    public synchronized void addCurrentNode(NodeState nodeState) {
-        currentHostAndPort = nodeState.hostAndPort();
+    public synchronized void addCurrentNode(HostInfo hostInfo) {
+        currentHostAndPort = hostInfo.hostAndPort();
 
         endpoints.put(
                 currentHostAndPort,
                 new EndpointState(
-                        nodeState,
+                        hostInfo,
                         new HearbeatState(Instant.now().getEpochSecond(), 0),
                         new ApplicationState(ApplicationState.AppStatus.BOOTSTRAP, 0.0)));
     }
 
-    public synchronized void addNode(NodeState nodeState) {
-        System.out.printf("Node added %s%n", nodeState);
+    public synchronized void addNode(HostInfo hostInfo) {
+        System.out.printf("Node added %s%n", hostInfo);
 
-        checkNotNull(nodeState, "Can't add null 'node'.");
+        checkNotNull(hostInfo, "Can't add null 'host'.");
         endpoints.put(
-                nodeState.hostAndPort(),
-                new EndpointState(nodeState, HearbeatState.EMPTY, ApplicationState.EMPTY));
+                hostInfo.hostAndPort(),
+                new EndpointState(hostInfo, HearbeatState.EMPTY, ApplicationState.EMPTY));
     }
 
     /**
-     * To simplify things, we'll copy all known hosts into an ArrayList, randomly shuffle the list,
-     * and then select the first 'numOfNodes' from the list.
+     * To simplify things, we'll copy all known hosts(endpoints) into an ArrayList, randomly shuffle
+     * the list, and then select the first 'numOfNodes' from the list.
      */
-    public synchronized List<NodeState> randomPeers(int numOfNodes) {
+    public synchronized List<HostInfo> randomPeers(int numOfNodes) {
         List<Map.Entry<String, EndpointState>> endpointsCopy =
                 new ArrayList<>(endpoints.entrySet());
         Collections.shuffle(endpointsCopy);
 
-        List<NodeState> randomSelection = new ArrayList<>(numOfNodes);
+        List<HostInfo> randomSelection = new ArrayList<>(numOfNodes);
 
         Iterator<Map.Entry<String, EndpointState>> shuffledNodesIt = endpointsCopy.iterator();
         for (int i = 0; i < numOfNodes && shuffledNodesIt.hasNext(); ++i) {
 
             Map.Entry<String, EndpointState> singleEntry = shuffledNodesIt.next();
 
-            // skip current node if specified as a SEED
-            if (!singleEntry.getValue().node().hostAndPort().equals(currentHostAndPort)) {
-                randomSelection.add(singleEntry.getValue().node());
+            // skip current host if specified as a SEED
+            if (!singleEntry.getValue().host().hostAndPort().equals(currentHostAndPort)) {
+                randomSelection.add(singleEntry.getValue().host());
             }
         }
 
@@ -83,11 +83,11 @@ public enum NodeGlobalState {
             ApplicationState newAppState =
                     new ApplicationState(ApplicationState.AppStatus.NORMAL, 50.0);
             newEndpointState =
-                    new EndpointState(currentEndpointState.node(), newHeartbeat, newAppState);
+                    new EndpointState(currentEndpointState.host(), newHeartbeat, newAppState);
         } else {
             newEndpointState =
                     new EndpointState(
-                            currentEndpointState.node(),
+                            currentEndpointState.host(),
                             newHeartbeat,
                             currentEndpointState.application());
         }

@@ -4,9 +4,9 @@ import github.com.mstepan.gossip.client.GossipClient;
 import github.com.mstepan.gossip.command.digest.MessageWrapper;
 import github.com.mstepan.gossip.command.digest.SynRequest;
 import github.com.mstepan.gossip.command.digest.SynResponse;
+import github.com.mstepan.gossip.state.HostInfo;
 import github.com.mstepan.gossip.state.NodeGlobalState;
 import github.com.mstepan.gossip.state.NodeGlobalStateSnapshot;
-import github.com.mstepan.gossip.state.NodeState;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -35,7 +35,7 @@ public class GossipScheduledTask implements Runnable {
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                List<NodeState> peersToGossip = NodeGlobalState.INST.randomPeers(HOST_GOSSIP_COUNT);
+                List<HostInfo> peersToGossip = NodeGlobalState.INST.randomPeers(HOST_GOSSIP_COUNT);
 
                 NodeGlobalStateSnapshot nodeGlobalStateSnapshot =
                         NodeGlobalState.INST.recordCycle();
@@ -45,7 +45,7 @@ public class GossipScheduledTask implements Runnable {
                         "Gossip cycle: %d%n", nodeGlobalStateSnapshot.heartbeat().version());
                 System.out.println("===========================================================");
 
-                for (NodeState singleNode : peersToGossip) {
+                for (HostInfo singleNode : peersToGossip) {
                     startGossipConversation(singleNode, nodeGlobalStateSnapshot);
                 }
 
@@ -69,7 +69,7 @@ public class GossipScheduledTask implements Runnable {
     }
 
     private void startGossipConversation(
-            NodeState singleNode, NodeGlobalStateSnapshot stateSnapshot) {
+            HostInfo singleNode, NodeGlobalStateSnapshot stateSnapshot) {
         try (GossipClient client = GossipClient.newInstance(singleNode.host(), singleNode.port())) {
             SynRequest.Builder synRequestBuilder = SynRequest.newBuilder();
 
@@ -78,10 +78,10 @@ public class GossipScheduledTask implements Runnable {
 
             SynResponse synResponse = client.sendMessage(message);
 
-            System.out.printf("Gossip conversation completed with node: %s%n", singleNode);
+            System.out.printf("Gossip conversation completed with host: %s%n", singleNode);
 
         } catch (Exception ex) {
-            System.out.printf("Gossip conversation failed with node: %s%n", singleNode);
+            System.out.printf("Gossip conversation failed with host: %s%n", singleNode);
         }
     }
 }

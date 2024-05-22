@@ -4,9 +4,9 @@ import static github.com.mstepan.gossip.util.Preconditions.checkArgument;
 
 import github.com.mstepan.gossip.server.GossipScheduledTask;
 import github.com.mstepan.gossip.server.GossipServer;
+import github.com.mstepan.gossip.state.HostInfo;
+import github.com.mstepan.gossip.state.HostType;
 import github.com.mstepan.gossip.state.NodeGlobalState;
-import github.com.mstepan.gossip.state.NodeState;
-import github.com.mstepan.gossip.state.NodeType;
 import github.com.mstepan.gossip.util.NetworkUtils;
 import github.com.mstepan.gossip.util.Preconditions;
 import java.util.List;
@@ -17,7 +17,7 @@ import picocli.CommandLine;
         name = "gossip",
         mixinStandardHelpOptions = true,
         version = "gossip-tcp 0.0.1",
-        description = "Start Gossip node.")
+        description = "Start Gossip host.")
 final class ApplicationMain implements Callable<Integer> {
 
     @CommandLine.Option(
@@ -47,7 +47,7 @@ final class ApplicationMain implements Callable<Integer> {
 
                 checkArgument(
                         hostAndPort.length == 2,
-                        "Incorrect seed node detected '%s', should be in format host:port."
+                        "Incorrect seed host detected '%s', should be in format host:port."
                                 .formatted(singleSeed));
 
                 String seedHost = hostAndPort[0];
@@ -56,9 +56,9 @@ final class ApplicationMain implements Callable<Integer> {
                                 hostAndPort[1],
                                 "Seed port is not an integer value: %s".formatted(hostAndPort[1]));
 
-                NodeState seedNodeState = new NodeState(seedHost, seedPort, NodeType.SEED);
+                HostInfo seedHostInfo = new HostInfo(seedHost, seedPort, HostType.SEED);
 
-                NodeGlobalState.INST.addNode(seedNodeState);
+                NodeGlobalState.INST.addNode(seedHostInfo);
             }
 
             Thread gossipThread = GossipScheduledTask.createThread();
@@ -77,13 +77,13 @@ final class ApplicationMain implements Callable<Integer> {
         return 0;
     }
 
-    private NodeState currentNode() {
+    private HostInfo currentNode() {
         String currentHost = NetworkUtils.getHostAddress().getCanonicalHostName();
         String hostAndPort = "%s:%s".formatted(currentHost, port);
 
-        NodeType currentType = seeds.contains(hostAndPort) ? NodeType.SEED : NodeType.NORMAL;
+        HostType currentType = seeds.contains(hostAndPort) ? HostType.SEED : HostType.NORMAL;
 
-        return new NodeState(currentHost, port, currentType);
+        return new HostInfo(currentHost, port, currentType);
     }
 
     public static void main(String[] args) {
