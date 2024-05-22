@@ -4,9 +4,9 @@ import github.com.mstepan.gossip.client.GossipClient;
 import github.com.mstepan.gossip.command.digest.MessageWrapper;
 import github.com.mstepan.gossip.command.digest.SynRequest;
 import github.com.mstepan.gossip.command.digest.SynResponse;
-import github.com.mstepan.gossip.state.EndpointState;
-import github.com.mstepan.gossip.state.EndpointStateSnapshot;
-import github.com.mstepan.gossip.state.NodeInfo;
+import github.com.mstepan.gossip.state.NodeGlobalState;
+import github.com.mstepan.gossip.state.NodeGlobalStateSnapshot;
+import github.com.mstepan.gossip.state.NodeState;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -35,17 +35,18 @@ public class GossipScheduledTask implements Runnable {
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                List<NodeInfo> peersToGossip = EndpointState.INST.randomPeers(HOST_GOSSIP_COUNT);
+                List<NodeState> peersToGossip = NodeGlobalState.INST.randomPeers(HOST_GOSSIP_COUNT);
 
-                EndpointStateSnapshot endpointStateSnapshot = EndpointState.INST.recordCycle();
+                NodeGlobalStateSnapshot nodeGlobalStateSnapshot =
+                        NodeGlobalState.INST.recordCycle();
 
                 System.out.println("===========================================================");
                 System.out.printf(
-                        "Gossip cycle: %d%n", endpointStateSnapshot.heartbitState().hearbit());
+                        "Gossip cycle: %d%n", nodeGlobalStateSnapshot.heartbeat().version());
                 System.out.println("===========================================================");
 
-                for (NodeInfo singleNode : peersToGossip) {
-                    startGossipConversation(singleNode, endpointStateSnapshot);
+                for (NodeState singleNode : peersToGossip) {
+                    startGossipConversation(singleNode, nodeGlobalStateSnapshot);
                 }
 
                 TimeUnit.MILLISECONDS.sleep(GOSSIP_CYCLE_PERIOD_IN_MS);
@@ -67,7 +68,8 @@ public class GossipScheduledTask implements Runnable {
         }
     }
 
-    private void startGossipConversation(NodeInfo singleNode, EndpointStateSnapshot stateSnapshot) {
+    private void startGossipConversation(
+            NodeState singleNode, NodeGlobalStateSnapshot stateSnapshot) {
         try (GossipClient client = GossipClient.newInstance(singleNode.host(), singleNode.port())) {
             SynRequest.Builder synRequestBuilder = SynRequest.newBuilder();
 
