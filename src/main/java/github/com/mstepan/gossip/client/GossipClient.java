@@ -1,8 +1,8 @@
 package github.com.mstepan.gossip.client;
 
 import github.com.mstepan.gossip.command.digest.DigestLine;
+import github.com.mstepan.gossip.command.digest.MessageWrapper;
 import github.com.mstepan.gossip.command.digest.SynMessage;
-import github.com.mstepan.gossip.command.digest.WrapperMessage;
 import github.com.mstepan.gossip.util.NetworkUtils;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -18,7 +18,7 @@ public class GossipClient {
         this.port = port;
     }
 
-    public void sendMessage(WrapperMessage message) {
+    public void sendMessage(MessageWrapper message) {
         try {
             System.out.printf("Connecting to gossip node at port: '%d'%n", port);
 
@@ -59,7 +59,7 @@ public class GossipClient {
         SynMessage synMessage =
                 SynMessage.newBuilder().addDigests(digestLine1).addDigests(digestLine2).build();
 
-        WrapperMessage message = WrapperMessage.newBuilder().setDigest(synMessage).build();
+        MessageWrapper message = MessageWrapper.newBuilder().setDigest(synMessage).build();
 
         client.sendMessage(message);
     }

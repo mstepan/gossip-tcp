@@ -1,18 +1,18 @@
 package github.com.mstepan.gossip.server;
 
+import github.com.mstepan.gossip.command.digest.MessageWrapper;
 import github.com.mstepan.gossip.command.digest.SynMessage;
-import github.com.mstepan.gossip.command.digest.WrapperMessage;
 import github.com.mstepan.gossip.util.NetworkUtils;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 
-final class TcpConversationHandler implements Runnable {
+final class GossipTcpConversationHandler implements Runnable {
 
     private final Socket clientSocket;
 
-    public TcpConversationHandler(Socket clientSocket) {
+    public GossipTcpConversationHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
     }
 
@@ -22,7 +22,7 @@ final class TcpConversationHandler implements Runnable {
             try (InputStream in = clientSocket.getInputStream();
                     BufferedInputStream bufferedIn = new BufferedInputStream(in)) {
 
-                WrapperMessage message = WrapperMessage.newBuilder().mergeFrom(bufferedIn).build();
+                MessageWrapper message = MessageWrapper.newBuilder().mergeFrom(bufferedIn).build();
 
                 if (message.hasDigest()) {
                     // handle SYN

@@ -7,14 +7,7 @@ option java_multiple_files = true;
 
 option java_package = "github.com.mstepan.gossip.command.digest";
 
-//enum GossipMessageType {
-//  SYN = 0;
-//  ACK = 1;
-//  ACK2 = 2;
-//}
-
-message WrapperMessage {
-//  GossipMessageType tag = 1;
+message MessageWrapper {
   oneof msg {
     SynMessage digest = 2;
     AckMessage ack = 3;

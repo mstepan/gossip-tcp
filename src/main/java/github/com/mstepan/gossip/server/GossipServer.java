@@ -34,7 +34,7 @@ public final class GossipServer {
                             "Client connected from '%s:%d'(TCP)%n",
                             clientSocket.getLocalAddress().getCanonicalHostName(),
                             clientSocket.getPort());
-                    virtualPool.submit(new TcpConversationHandler(clientSocket));
+                    virtualPool.submit(new GossipTcpConversationHandler(clientSocket));
                 }
             }
         } catch (IOException ioEx) {
