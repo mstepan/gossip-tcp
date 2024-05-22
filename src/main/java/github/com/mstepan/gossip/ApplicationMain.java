@@ -61,7 +61,7 @@ final class ApplicationMain implements Callable<Integer> {
                                         .equals(seedHost));
 
                 KnownNodes.INST.addNode(
-                        new NodeInfo(seedHost, port, NodeType.SEED, currentNodeFlag));
+                        new NodeInfo(seedHost, seedPort, NodeType.SEED, currentNodeFlag));
             }
 
             Thread gossipThread = GossipScheduledTask.createThread();
