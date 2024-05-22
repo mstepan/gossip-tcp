@@ -4,10 +4,8 @@ import github.com.mstepan.gossip.client.GossipClient;
 import github.com.mstepan.gossip.command.digest.MessageWrapper;
 import github.com.mstepan.gossip.command.digest.SynRequest;
 import github.com.mstepan.gossip.command.digest.SynResponse;
-import github.com.mstepan.gossip.state.KnownNodes;
 import github.com.mstepan.gossip.state.NodeGlobalState;
 import github.com.mstepan.gossip.state.NodeInfo;
-import github.com.mstepan.gossip.state.NodeStateSnapshot;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -17,7 +15,7 @@ public class GossipScheduledTask implements Runnable {
     private static final int HOST_GOSSIP_COUNT = 3;
 
     /** Single gossip cycle period. Should be 1 sec after testing. */
-    private static final long GOSSIP_CYCLE_PERIOD_IN_MS = 30_000L;
+    private static final long GOSSIP_CYCLE_PERIOD_IN_MS = 10_000L;
 
     public static Thread createThread() {
         Thread gossipThread = new Thread(new GossipScheduledTask());
@@ -33,9 +31,9 @@ public class GossipScheduledTask implements Runnable {
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                NodeStateSnapshot snapshot = NodeGlobalState.INST.recordCycle();
+                //                NodeStateSnapshot snapshot = NodeGlobalState.INST.recordCycle();
 
-                List<NodeInfo> peersToGossip = KnownNodes.INST.randomPeers(HOST_GOSSIP_COUNT);
+                List<NodeInfo> peersToGossip = NodeGlobalState.INST.randomPeers(HOST_GOSSIP_COUNT);
 
                 for (NodeInfo singleNode : peersToGossip) {
                     try {
@@ -49,7 +47,8 @@ public class GossipScheduledTask implements Runnable {
                     }
                 }
 
-                System.out.printf("Gossip cycle completed with state: %s%n", snapshot);
+                //                System.out.printf("Gossip cycle completed with state: %s%n",
+                // snapshot);
 
                 TimeUnit.MILLISECONDS.sleep(GOSSIP_CYCLE_PERIOD_IN_MS);
             } catch (InterruptedException interEx) {

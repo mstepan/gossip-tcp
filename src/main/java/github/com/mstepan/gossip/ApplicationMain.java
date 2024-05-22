@@ -4,7 +4,7 @@ import static github.com.mstepan.gossip.util.Preconditions.checkArgument;
 
 import github.com.mstepan.gossip.server.GossipScheduledTask;
 import github.com.mstepan.gossip.server.GossipServer;
-import github.com.mstepan.gossip.state.KnownNodes;
+import github.com.mstepan.gossip.state.NodeGlobalState;
 import github.com.mstepan.gossip.state.NodeInfo;
 import github.com.mstepan.gossip.state.NodeType;
 import github.com.mstepan.gossip.util.NetworkUtils;
@@ -40,6 +40,9 @@ final class ApplicationMain implements Callable<Integer> {
     @Override
     public Integer call() {
         try {
+            NodeInfo currentNode = currentNode();
+            NodeGlobalState.INST.addCurrentNode(currentNode);
+
             for (String singleSeed : seeds) {
                 String[] hostAndPort = singleSeed.split(":");
 
@@ -54,14 +57,12 @@ final class ApplicationMain implements Callable<Integer> {
                                 hostAndPort[1],
                                 "Seed port is not an integer value: %s".formatted(hostAndPort[1]));
 
-                boolean currentNodeFlag =
-                        (port == seedPort
-                                && NetworkUtils.getHostAddress()
-                                        .getCanonicalHostName()
-                                        .equals(seedHost));
+                NodeInfo seedNodeInfo = new NodeInfo(seedHost, seedPort, NodeType.SEED);
 
-                KnownNodes.INST.addNode(
-                        new NodeInfo(seedHost, seedPort, NodeType.SEED, currentNodeFlag));
+                // skip current node if specified as a SEED
+                if (!seedNodeInfo.equals(currentNode)) {
+                    NodeGlobalState.INST.addNode(seedNodeInfo);
+                }
             }
 
             Thread gossipThread = GossipScheduledTask.createThread();
@@ -78,6 +79,15 @@ final class ApplicationMain implements Callable<Integer> {
         }
 
         return 0;
+    }
+
+    private NodeInfo currentNode() {
+        String currentHost = NetworkUtils.getHostAddress().getCanonicalHostName();
+        String hostAndPort = "%s:%s".formatted(currentHost, port);
+
+        NodeType currentType = seeds.contains(hostAndPort) ? NodeType.SEED : NodeType.NORMAL;
+
+        return new NodeInfo(currentHost, port, currentType);
     }
 
     public static void main(String[] args) {
