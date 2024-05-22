@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Tracks gossip node state. Should be thread-safe. We will leverage enum-singleton to prevent the
- * instantiation of multiple instances of this class.
+ * Tracks gossip node state and associated metadata. Should be thread-safe. We will leverage
+ * enum-singleton to prevent the instantiation of multiple instances of this class.
  */
-public enum NodeGlobalState {
+public enum EndpointState {
     INST;
 
     /** Keep a set of all nodes that the current host knows about. */
@@ -22,20 +22,15 @@ public enum NodeGlobalState {
 
     private NodeInfo current;
 
-    /** Epoch timestamp in seconds. */
-    private long generation;
-
-    /** Monotonically increased counter. Increment during each gossip cycle. */
-    private long heartbit;
+    private HearbitState heartbitState;
 
     /** Node status. For local usage only. Should not be shared during gossip communication. */
-    private NodeStatus status;
+    private ApplicationState appState;
 
-    NodeGlobalState() {
+    EndpointState() {
         nodes = new HashSet<>();
-        generation = Instant.now().getEpochSecond();
-        heartbit = 0;
-        status = NodeStatus.BOOTSTRAP;
+        heartbitState = new HearbitState(Instant.now().getEpochSecond(), 0);
+        appState = new ApplicationState(AppStatus.BOOTSTRAP, 0.0);
     }
 
     public synchronized void addCurrentNode(NodeInfo node) {
@@ -67,14 +62,15 @@ public enum NodeGlobalState {
         return randomSelection;
     }
 
-    public synchronized NodeStateSnapshot recordCycle() {
-        generation = Instant.now().getEpochSecond();
-        ++heartbit;
-        return snapshot();
-    }
+    public synchronized EndpointStateSnapshot recordCycle() {
+        // set new HeartBit state value
+        heartbitState =
+                new HearbitState(Instant.now().getEpochSecond(), heartbitState.hearbit() + 1);
 
-    public synchronized NodeStateSnapshot snapshot() {
-
-        return new NodeStateSnapshot(generation, heartbit, status);
+        // wait at least 3 gossip iterations till mark application status as NORMAL
+        if (heartbitState.hearbit() == 3) {
+            appState = new ApplicationState(AppStatus.NORMAL, 50.0);
+        }
+        return new EndpointStateSnapshot(heartbitState, appState);
     }
 }

@@ -4,7 +4,7 @@ import static github.com.mstepan.gossip.util.Preconditions.checkArgument;
 
 import github.com.mstepan.gossip.server.GossipScheduledTask;
 import github.com.mstepan.gossip.server.GossipServer;
-import github.com.mstepan.gossip.state.NodeGlobalState;
+import github.com.mstepan.gossip.state.EndpointState;
 import github.com.mstepan.gossip.state.NodeInfo;
 import github.com.mstepan.gossip.state.NodeType;
 import github.com.mstepan.gossip.util.NetworkUtils;
@@ -41,7 +41,7 @@ final class ApplicationMain implements Callable<Integer> {
     public Integer call() {
         try {
             NodeInfo currentNode = currentNode();
-            NodeGlobalState.INST.addCurrentNode(currentNode);
+            EndpointState.INST.addCurrentNode(currentNode);
 
             for (String singleSeed : seeds) {
                 String[] hostAndPort = singleSeed.split(":");
@@ -61,7 +61,7 @@ final class ApplicationMain implements Callable<Integer> {
 
                 // skip current node if specified as a SEED
                 if (!seedNodeInfo.equals(currentNode)) {
-                    NodeGlobalState.INST.addNode(seedNodeInfo);
+                    EndpointState.INST.addNode(seedNodeInfo);
                 }
             }
 

@@ -1,6 +1,6 @@
 package github.com.mstepan.gossip.state;
 
-public enum NodeStatus {
+public enum AppStatus {
     BOOTSTRAP,
     NORMAL,
     LEAVING,
