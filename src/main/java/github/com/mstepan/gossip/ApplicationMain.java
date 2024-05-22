@@ -2,25 +2,43 @@ package github.com.mstepan.gossip;
 
 import github.com.mstepan.gossip.server.GossipScheduledTask;
 import github.com.mstepan.gossip.server.GossipServer;
+import java.util.concurrent.Callable;
+import picocli.CommandLine;
 
-public final class ApplicationMain {
+@CommandLine.Command(
+        name = "gossip",
+        mixinStandardHelpOptions = true,
+        version = "gossip-tcp 0.0.1",
+        description = "Start Gossip node.")
+class ApplicationMain implements Callable<Integer> {
 
-    public static void main(String[] args) {
+    @CommandLine.Option(
+            names = {"-p", "--port"},
+            required = true,
+            description = "Choose a port number to start the server.")
+    private int port;
+
+    @CommandLine.Option(
+            names = {"-g", "--gossip"},
+            description = "Start Gossip broadcasting immediately.")
+    private boolean startGossipConversation = false;
+
+    @Override
+    public Integer call() throws Exception {
         Thread gossipThread = GossipScheduledTask.createThread();
 
-        // TODO: temporary disabled
-        // gossipThread.start();
-
-        if (args.length < 1) {
-            System.err.println("Port value should be passed as a command line argument");
-            return;
+        if (startGossipConversation) {
+            gossipThread.start();
         }
-
-        final int port = Integer.parseInt(args[0]);
 
         GossipServer server = new GossipServer(port);
         server.startAndWaitForShutdown();
 
-        System.out.println("Application completed...");
+        return 0;
+    }
+
+    public static void main(String[] args) {
+        int exitCode = new CommandLine(new ApplicationMain()).execute(args);
+        System.exit(exitCode);
     }
 }

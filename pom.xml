@@ -16,7 +16,9 @@
         <grpc.version>1.64.0</grpc.version>
         <junit.bom.version>5.5.2</junit.bom.version>
         <mockito-version>2.21.0</mockito-version>
+        <picocli.version>4.7.6</picocli.version>
         <protoc.version>3.25.1</protoc.version>
+
 
         <!-- maven plugins -->
         <compiler.plugin.version>3.11.0</compiler.plugin.version>
@@ -95,15 +97,23 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <!-- annotationProcessorPaths requires maven-compiler-plugin version 3.5 or higher
+                 for picocli to work properly-->
                 <version>${compiler.plugin.version}</version>
                 <configuration>
                     <release>${java.version}</release>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>info.picocli</groupId>
+                            <artifactId>picocli-codegen</artifactId>
+                            <version>${picocli.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                     <compilerArgs>
-                        <arg>--enable-preview</arg>
-                        <arg>--add-modules</arg>
-                        <arg>jdk.incubator.concurrent</arg>
+                        <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
                     </compilerArgs>
                 </configuration>
+
             </plugin>
 
             <!-- Surefire for unit tests  -->
@@ -111,9 +121,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.plugin.version}</version>
-                <configuration>
-                    <argLine>--enable-preview</argLine>
-                </configuration>
             </plugin>
 
             <!-- Shaded plugin for fat executable JAR file -->
@@ -219,6 +226,15 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-protobuf</artifactId>
+        </dependency>
+
+        <!--
+        https://picocli.info/
+         -->
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+            <version>${picocli.version}</version>
         </dependency>
 
         <!-- Test dependencies -->
