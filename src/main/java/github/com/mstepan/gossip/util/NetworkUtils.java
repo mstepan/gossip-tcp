@@ -11,14 +11,25 @@ public final class NetworkUtils {
         throw new AssertionError("Can't instantiate utility-only class");
     }
 
-    public static void close(Closeable socket) {
-        if (socket == null) {
+    public static void close(Closeable stream) {
+        if (stream == null) {
             return;
         }
         try {
-            socket.close();
+            stream.close();
         } catch (IOException ioEx) {
             throw new IllegalStateException(ioEx);
+        }
+    }
+
+    public static void closeSilently(Closeable stream) {
+        if (stream == null) {
+            return;
+        }
+        try {
+            stream.close();
+        } catch (IOException ioEx) {
+            System.err.println(ioEx.getMessage());
         }
     }
 

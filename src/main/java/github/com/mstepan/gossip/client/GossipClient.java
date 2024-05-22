@@ -39,20 +39,17 @@ public class GossipClient implements AutoCloseable {
 
     @Override
     public void close() {
-        NetworkUtils.close(out);
-        NetworkUtils.close(socket);
+        NetworkUtils.closeSilently(in);
+        NetworkUtils.closeSilently(out);
+        NetworkUtils.closeSilently(socket);
     }
 
     public SynResponse sendMessage(MessageWrapper message) {
         try {
-            System.out.println("Sending SYN request");
-
             message.writeTo(out);
             out.flush();
 
             SynResponse synResponse = SynResponse.newBuilder().build();
-
-            System.out.printf("SYN sent successfully, received response: %s%n", synResponse);
 
             return synResponse;
         } catch (IOException ioEx) {

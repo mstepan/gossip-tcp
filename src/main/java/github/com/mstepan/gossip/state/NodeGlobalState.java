@@ -74,6 +74,7 @@ public enum NodeGlobalState {
     }
 
     public synchronized NodeStateSnapshot snapshot() {
+
         return new NodeStateSnapshot(generation, heartbit, status);
     }
 }

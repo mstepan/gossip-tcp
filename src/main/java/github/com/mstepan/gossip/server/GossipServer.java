@@ -23,17 +23,13 @@ public final class GossipServer {
         final InetAddress address = NetworkUtils.getHostAddress();
 
         System.out.printf(
-                "Server started at '%s:%d' (TCP)%n", address.getCanonicalHostName(), port);
+                "Server listening at '%s:%d' (TCP)%n", address.getCanonicalHostName(), port);
 
         try (ExecutorService virtualPool = Executors.newVirtualThreadPerTaskExecutor()) {
             try (ServerSocket serverSocket = new ServerSocket(port, TCP_QUEUE_SIZE, address)) {
 
                 while (!Thread.currentThread().isInterrupted()) {
                     Socket clientSocket = serverSocket.accept();
-                    System.out.printf(
-                            "Client connected from '%s:%d'(TCP)%n",
-                            clientSocket.getLocalAddress().getCanonicalHostName(),
-                            clientSocket.getPort());
                     virtualPool.submit(new GossipTcpConversationHandler(clientSocket));
                 }
             }

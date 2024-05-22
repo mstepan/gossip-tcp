@@ -6,6 +6,7 @@ import github.com.mstepan.gossip.command.digest.SynRequest;
 import github.com.mstepan.gossip.command.digest.SynResponse;
 import github.com.mstepan.gossip.state.NodeGlobalState;
 import github.com.mstepan.gossip.state.NodeInfo;
+import github.com.mstepan.gossip.state.NodeStateSnapshot;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -30,13 +31,13 @@ public class GossipScheduledTask implements Runnable {
     @Override
     public void run() {
         System.out.println("Gossip task started");
-        sleepMs(INITIAL_DELAY_IN_MS);
+        initialSleep();
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 List<NodeInfo> peersToGossip = NodeGlobalState.INST.randomPeers(HOST_GOSSIP_COUNT);
                 for (NodeInfo singleNode : peersToGossip) {
-                    startGossipConversation(singleNode);
+                    startGossipConversation(singleNode, NodeGlobalState.INST.recordCycle());
                 }
 
                 TimeUnit.MILLISECONDS.sleep(GOSSIP_CYCLE_PERIOD_IN_MS);
@@ -49,40 +50,28 @@ public class GossipScheduledTask implements Runnable {
         System.out.println("Gossip task completed");
     }
 
-    private static void sleepMs(long delayInMs) {
+    private static void initialSleep() {
         try {
-            TimeUnit.MILLISECONDS.sleep(delayInMs);
+            TimeUnit.MILLISECONDS.sleep(INITIAL_DELAY_IN_MS);
         } catch (InterruptedException interEx) {
+            // if interrupted, just propagate interruption flag
             Thread.currentThread().interrupt();
         }
     }
 
-    private void startGossipConversation(NodeInfo singleNode) {
-
-        System.out.printf("Starting gossip conversation with node: %s.%n", singleNode);
-
+    private void startGossipConversation(NodeInfo singleNode, NodeStateSnapshot stateSnapshot) {
         try (GossipClient client = GossipClient.newInstance(singleNode.host(), singleNode.port())) {
             SynRequest.Builder synRequestBuilder = SynRequest.newBuilder();
-
-            //        DigestLine digestLine1 =
-            //                DigestLine.newBuilder()
-            //                        .setHost("192.168.1.1")
-            //                        .setPort(5001)
-            //                        .setGeneration(Instant.now().getEpochSecond())
-            //                        .setHeartbit(5L)
-            //                        .build();
-            //
-            //        synRequestBuilder.addDigests(digestLine1);
 
             MessageWrapper message =
                     MessageWrapper.newBuilder().setSynRequest(synRequestBuilder.build()).build();
 
             SynResponse synResponse = client.sendMessage(message);
 
-            System.out.printf("Gossip conversation completed for node: %s .", singleNode);
+            System.out.printf("Gossip conversation completed with node: %s%n", singleNode);
 
         } catch (Exception ex) {
-            System.out.printf("Gossip conversation failed with node: %s%n.", singleNode);
+            System.out.printf("Gossip conversation failed with node: %s%n", singleNode);
         }
     }
 }
