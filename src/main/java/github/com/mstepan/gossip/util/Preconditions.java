@@ -25,4 +25,16 @@ public final class Preconditions {
             throw new IllegalStateException(errorMessage);
         }
     }
+
+    /**
+     * Try to convert string parameter into int value, throwing 'IllegalArgumentException' if not
+     * possible to convert.
+     */
+    public static int parseInt(String strToConvertToInt, String errorMessage) {
+        try {
+            return Integer.parseInt(strToConvertToInt);
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+    }
 }

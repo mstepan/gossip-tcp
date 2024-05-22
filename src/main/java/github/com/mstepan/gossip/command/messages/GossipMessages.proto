@@ -9,13 +9,19 @@ option java_package = "github.com.mstepan.gossip.command.digest";
 
 message MessageWrapper {
   oneof msg {
-    SynMessage digest = 2;
-    AckMessage ack = 3;
-    Ack2Message ack2 = 4;
+    SynRequest synRequest = 2;
+    SynResponse synResponse = 3;
+
+    AckRequest ackRequest = 4;
+    AckResponse ackResponse = 5;
+
+    Ack2Request ack2Request = 6;
+    Ack2Response ack2Response = 7;
   }
 }
 
-message SynMessage {
+// ================================ SYN =============================================================================
+message SynRequest {
   repeated DigestLine digests = 1;
 }
 
@@ -26,8 +32,20 @@ message DigestLine {
   uint64 heartbit = 4;
 }
 
-message AckMessage {
+message SynResponse {
+
 }
 
-message Ack2Message {
+// ================================ ACK =============================================================================
+message AckRequest {
+}
+
+message AckResponse {
+}
+
+// ================================ ACK2 =============================================================================
+message Ack2Request {
+}
+
+message Ack2Response {
 }

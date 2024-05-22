@@ -1,7 +1,7 @@
 package github.com.mstepan.gossip.server;
 
 import github.com.mstepan.gossip.command.digest.MessageWrapper;
-import github.com.mstepan.gossip.command.digest.SynMessage;
+import github.com.mstepan.gossip.command.digest.SynRequest;
 import github.com.mstepan.gossip.util.NetworkUtils;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -24,14 +24,14 @@ final class GossipTcpConversationHandler implements Runnable {
 
                 MessageWrapper message = MessageWrapper.newBuilder().mergeFrom(bufferedIn).build();
 
-                if (message.hasDigest()) {
+                if (message.hasSynRequest()) {
                     // handle SYN
-                    SynMessage synMessage = message.getDigest();
-                    System.out.printf("Received digest: %s%n", synMessage);
-                } else if (message.hasAck()) {
+                    SynRequest synRequest = message.getSynRequest();
+                    System.out.printf("SYN request received: %s%n", synRequest);
+                } else if (message.hasAckRequest()) {
                     // handle ACK
                     // TODO:
-                } else if (message.hasAck2()) {
+                } else if (message.hasAck2Request()) {
                     // handle ACK2
                     // TODO:
                 } else {

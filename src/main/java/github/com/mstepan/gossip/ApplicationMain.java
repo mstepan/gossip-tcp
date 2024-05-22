@@ -7,6 +7,8 @@ import github.com.mstepan.gossip.server.GossipServer;
 import github.com.mstepan.gossip.state.KnownNodes;
 import github.com.mstepan.gossip.state.NodeInfo;
 import github.com.mstepan.gossip.state.NodeType;
+import github.com.mstepan.gossip.util.NetworkUtils;
+import github.com.mstepan.gossip.util.Preconditions;
 import java.util.List;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
@@ -45,9 +47,21 @@ final class ApplicationMain implements Callable<Integer> {
                         hostAndPort.length == 2,
                         "Incorrect seed node detected '%s', should be in format host:port."
                                 .formatted(singleSeed));
+
+                String seedHost = hostAndPort[0];
+                int seedPort =
+                        Preconditions.parseInt(
+                                hostAndPort[1],
+                                "Seed port is not an integer value: %s".formatted(hostAndPort[1]));
+
+                boolean currentNodeFlag =
+                        (port == seedPort
+                                && NetworkUtils.getHostAddress()
+                                        .getCanonicalHostName()
+                                        .equals(seedHost));
+
                 KnownNodes.INST.addNode(
-                        new NodeInfo(
-                                hostAndPort[0], Integer.parseInt(hostAndPort[1]), NodeType.SEED));
+                        new NodeInfo(seedHost, port, NodeType.SEED, currentNodeFlag));
             }
 
             Thread gossipThread = GossipScheduledTask.createThread();
