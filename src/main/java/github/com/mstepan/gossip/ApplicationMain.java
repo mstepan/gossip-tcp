@@ -1,7 +1,12 @@
 package github.com.mstepan.gossip;
 
+import static github.com.mstepan.gossip.util.Preconditions.checkArgument;
+
 import github.com.mstepan.gossip.server.GossipScheduledTask;
 import github.com.mstepan.gossip.server.GossipServer;
+import github.com.mstepan.gossip.state.KnownNodes;
+import github.com.mstepan.gossip.state.NodeInfo;
+import github.com.mstepan.gossip.state.NodeType;
 import java.util.List;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
@@ -32,16 +37,31 @@ final class ApplicationMain implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        System.out.printf("Initial seeds: %s%n", seeds);
+        try {
+            for (String singleSeed : seeds) {
+                String[] hostAndPort = singleSeed.split(":");
 
-        Thread gossipThread = GossipScheduledTask.createThread();
+                checkArgument(
+                        hostAndPort.length == 2,
+                        "Incorrect seed node detected '%s', should be in format host:port."
+                                .formatted(singleSeed));
+                KnownNodes.INST.addNode(
+                        new NodeInfo(
+                                hostAndPort[0], Integer.parseInt(hostAndPort[1]), NodeType.SEED));
+            }
 
-        if (startGossipConversation) {
-            gossipThread.start();
+            Thread gossipThread = GossipScheduledTask.createThread();
+
+            if (startGossipConversation) {
+                gossipThread.start();
+            }
+
+            GossipServer server = new GossipServer(port);
+            server.startAndWaitForShutdown();
+        } catch (Exception ex) {
+            System.err.println(ex.getMessage());
+            return -1;
         }
-
-        GossipServer server = new GossipServer(port);
-        server.startAndWaitForShutdown();
 
         return 0;
     }
