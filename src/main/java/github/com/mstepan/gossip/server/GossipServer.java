@@ -30,7 +30,8 @@ public final class GossipServer {
 
                 while (!Thread.currentThread().isInterrupted()) {
                     Socket clientSocket = serverSocket.accept();
-                    virtualPool.submit(new GossipTcpConversationHandler(clientSocket));
+                    clientSocket.setTcpNoDelay(true);
+                    virtualPool.submit(new GossipConversationHandler(clientSocket));
                 }
             }
         } catch (IOException ioEx) {

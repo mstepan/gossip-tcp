@@ -4,9 +4,9 @@ import github.com.mstepan.gossip.command.digest.DigestLine;
 import github.com.mstepan.gossip.command.digest.GossipMessage;
 import github.com.mstepan.gossip.command.digest.Syn;
 import github.com.mstepan.gossip.util.NetworkUtils;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.time.Instant;
 
@@ -14,26 +14,24 @@ public class GossipClient implements AutoCloseable {
 
     private final Socket socket;
 
-    private final BufferedInputStream in;
+    private final InputStream in;
 
-    private final BufferedOutputStream out;
+    private final OutputStream out;
 
     public static GossipClient newInstance(String host, int port) {
         try {
             Socket socket = new Socket(host, port);
-            return new GossipClient(
-                    socket,
-                    new BufferedInputStream(socket.getInputStream()),
-                    new BufferedOutputStream(socket.getOutputStream()));
+            socket.setTcpNoDelay(true);
+            return new GossipClient(socket);
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
         }
     }
 
-    private GossipClient(Socket socket, BufferedInputStream in, BufferedOutputStream out) {
+    private GossipClient(Socket socket) {
         this.socket = socket;
-        this.in = in;
-        this.out = out;
+        this.in = NetworkUtils.socketInputStream(socket);
+        this.out = NetworkUtils.socketOutputStream(socket);
     }
 
     @Override
@@ -43,12 +41,13 @@ public class GossipClient implements AutoCloseable {
         NetworkUtils.closeSilently(socket);
     }
 
-    public GossipMessage sendMessage(GossipMessage requestMessage) {
+    public GossipMessage sendMessage(GossipMessage request) {
         try {
-            requestMessage.writeTo(out);
+            request.writeTo(out);
             out.flush();
 
-            return GossipMessage.newBuilder().mergeFrom(in).build();
+            GossipMessage response = GossipMessage.newBuilder().mergeFrom(in).build();
+            return response;
         } catch (IOException ioEx) {
             throw new IllegalStateException(ioEx);
         }
@@ -80,6 +79,8 @@ public class GossipClient implements AutoCloseable {
             GossipMessage message = GossipMessage.newBuilder().setSyn(synMessage).build();
 
             client.sendMessage(message);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 }

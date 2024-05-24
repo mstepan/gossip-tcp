@@ -40,7 +40,6 @@ public enum NodeGlobalState {
 
     public synchronized void addNode(HostInfo hostInfo) {
         System.out.printf("Node added %s%n", hostInfo);
-
         checkNotNull(hostInfo, "Can't add null 'host'.");
         endpoints.put(
                 hostInfo.hostAndPort(),

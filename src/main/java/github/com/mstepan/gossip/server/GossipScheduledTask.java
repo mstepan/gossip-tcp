@@ -1,6 +1,7 @@
 package github.com.mstepan.gossip.server;
 
 import github.com.mstepan.gossip.client.GossipClient;
+import github.com.mstepan.gossip.command.digest.Ack2;
 import github.com.mstepan.gossip.command.digest.DigestLine;
 import github.com.mstepan.gossip.command.digest.GossipMessage;
 import github.com.mstepan.gossip.command.digest.Syn;
@@ -13,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class GossipScheduledTask implements Runnable {
 
     /** The initial delay before we start sending gossip messages to other nodes. */
-    private static final long INITIAL_DELAY_IN_MS = 5000L;
+    private static final long INITIAL_DELAY_IN_MS = 1000L;
 
     /** Number of host that will be used for a single gossip cycle. */
     private static final int HOST_GOSSIP_COUNT = 3;
@@ -70,6 +71,7 @@ public class GossipScheduledTask implements Runnable {
 
     private void startGossipConversation(
             HostInfo singleNode, NodeGlobalStateSnapshot stateSnapshot) {
+
         try (GossipClient client = GossipClient.newInstance(singleNode.host(), singleNode.port())) {
 
             List<DigestLine> curDigest = NodeGlobalState.INST.createDigest();
@@ -82,12 +84,21 @@ public class GossipScheduledTask implements Runnable {
             GossipMessage synMessageRequest =
                     GossipMessage.newBuilder().setSyn(synBuilder.build()).build();
 
+            // Send SYN message
             GossipMessage ackMessageResponse = client.sendMessage(synMessageRequest);
 
-            System.out.printf("Gossip conversation completed with host: %s%n", singleNode);
+            // TODO: handle ACK message here, merge all required info, add request info to response
+
+            // Send ACK2 message
+            GossipMessage ack2MessageRequest =
+                    GossipMessage.newBuilder().setAck2(Ack2.newBuilder().build()).build();
+
+            client.sendMessage(ack2MessageRequest);
+
+            System.out.printf("Gossip conversation OK with host: %s%n", singleNode);
 
         } catch (Exception ex) {
-            System.out.printf("Gossip conversation failed with host: %s%n", singleNode);
+            System.out.printf("Gossip conversation FAILED with host: %s%n", singleNode);
         }
     }
 }

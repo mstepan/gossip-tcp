@@ -1,14 +1,35 @@
 package github.com.mstepan.gossip.util;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.UnknownHostException;
 
 public final class NetworkUtils {
 
     private NetworkUtils() {
         throw new AssertionError("Can't instantiate utility-only class");
+    }
+
+    public static InputStream socketInputStream(Socket socket) {
+        try {
+            return new BufferedInputStream(socket.getInputStream());
+        } catch (IOException ioEx) {
+            throw new IllegalStateException(ioEx);
+        }
+    }
+
+    public static OutputStream socketOutputStream(Socket socket) {
+        try {
+            return new BufferedOutputStream(socket.getOutputStream());
+        } catch (IOException ioEx) {
+            throw new IllegalStateException(ioEx);
+        }
     }
 
     public static void close(Closeable stream) {
