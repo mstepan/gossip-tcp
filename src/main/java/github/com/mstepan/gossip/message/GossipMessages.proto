@@ -7,21 +7,18 @@ option java_multiple_files = true;
 
 option java_package = "github.com.mstepan.gossip.command.digest";
 
-message MessageWrapper {
+message GossipMessage {
   oneof msg {
-    SynRequest synRequest = 2;
-    SynResponse synResponse = 3;
+    Syn syn = 2;
 
-    AckRequest ackRequest = 4;
-    AckResponse ackResponse = 5;
+    Ack ack = 3;
 
-    Ack2Request ack2Request = 6;
-    Ack2Response ack2Response = 7;
+    Ack2 ack2 = 4;
   }
 }
 
 // ================================ SYN =============================================================================
-message SynRequest {
+message Syn {
   repeated DigestLine digests = 1;
 }
 
@@ -32,20 +29,13 @@ message DigestLine {
   uint64 heartbit = 4;
 }
 
-message SynResponse {
-
-}
 
 // ================================ ACK =============================================================================
-message AckRequest {
+message Ack {
 }
 
-message AckResponse {
-}
 
 // ================================ ACK2 =============================================================================
-message Ack2Request {
+message Ack2 {
 }
 
-message Ack2Response {
-}

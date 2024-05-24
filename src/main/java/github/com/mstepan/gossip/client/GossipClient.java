@@ -1,9 +1,9 @@
 package github.com.mstepan.gossip.client;
 
+import github.com.mstepan.gossip.command.digest.Ack;
 import github.com.mstepan.gossip.command.digest.DigestLine;
-import github.com.mstepan.gossip.command.digest.MessageWrapper;
-import github.com.mstepan.gossip.command.digest.SynRequest;
-import github.com.mstepan.gossip.command.digest.SynResponse;
+import github.com.mstepan.gossip.command.digest.GossipMessage;
+import github.com.mstepan.gossip.command.digest.Syn;
 import github.com.mstepan.gossip.util.NetworkUtils;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -44,14 +44,14 @@ public class GossipClient implements AutoCloseable {
         NetworkUtils.closeSilently(socket);
     }
 
-    public SynResponse sendMessage(MessageWrapper message) {
+    public Ack sendMessage(GossipMessage message) {
         try {
             message.writeTo(out);
             out.flush();
 
-            SynResponse synResponse = SynResponse.newBuilder().build();
+            Ack ackMessage = Ack.newBuilder().build();
 
-            return synResponse;
+            return ackMessage;
         } catch (IOException ioEx) {
             throw new IllegalStateException(ioEx);
         }
@@ -77,10 +77,10 @@ public class GossipClient implements AutoCloseable {
                             .setHeartbit(3L)
                             .build();
 
-            SynRequest synRequest =
-                    SynRequest.newBuilder().addDigests(digestLine1).addDigests(digestLine2).build();
+            Syn synMessage =
+                    Syn.newBuilder().addDigests(digestLine1).addDigests(digestLine2).build();
 
-            MessageWrapper message = MessageWrapper.newBuilder().setSynRequest(synRequest).build();
+            GossipMessage message = GossipMessage.newBuilder().setSyn(synMessage).build();
 
             client.sendMessage(message);
         }

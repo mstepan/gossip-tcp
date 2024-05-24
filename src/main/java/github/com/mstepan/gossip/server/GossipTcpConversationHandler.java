@@ -1,9 +1,9 @@
 package github.com.mstepan.gossip.server;
 
+import github.com.mstepan.gossip.command.digest.Ack;
 import github.com.mstepan.gossip.command.digest.DigestLine;
-import github.com.mstepan.gossip.command.digest.MessageWrapper;
-import github.com.mstepan.gossip.command.digest.SynRequest;
-import github.com.mstepan.gossip.command.digest.SynResponse;
+import github.com.mstepan.gossip.command.digest.GossipMessage;
+import github.com.mstepan.gossip.command.digest.Syn;
 import github.com.mstepan.gossip.util.NetworkUtils;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -26,25 +26,25 @@ final class GossipTcpConversationHandler implements Runnable {
                     BufferedOutputStream out =
                             new BufferedOutputStream(clientSocket.getOutputStream())) {
 
-                MessageWrapper message = MessageWrapper.newBuilder().mergeFrom(in).build();
+                GossipMessage message = GossipMessage.newBuilder().mergeFrom(in).build();
 
-                if (message.hasSynRequest()) {
+                if (message.hasSyn()) {
                     // handle SYN request
-                    SynRequest synRequest = message.getSynRequest();
+                    Syn synMessage = message.getSyn();
 
-                    for (DigestLine digestLine : synRequest.getDigestsList()) {
+                    for (DigestLine digestLine : synMessage.getDigestsList()) {
                         System.out.printf("Handling digest line: '%s'%n", digestLine);
                     }
 
-                    // write SYN response
-                    SynResponse synResponse = SynResponse.newBuilder().build();
+                    // write ACK message
+                    Ack ackMessage = Ack.newBuilder().build();
 
-                    synResponse.writeTo(out);
+                    ackMessage.writeTo(out);
                     out.flush();
-                } else if (message.hasAckRequest()) {
+                } else if (message.hasAck()) {
                     // handle ACK
                     // TODO:
-                } else if (message.hasAck2Request()) {
+                } else if (message.hasAck2()) {
                     // handle ACK2
                     // TODO:
                 } else {

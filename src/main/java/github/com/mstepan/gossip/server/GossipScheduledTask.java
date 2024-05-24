@@ -1,9 +1,9 @@
 package github.com.mstepan.gossip.server;
 
 import github.com.mstepan.gossip.client.GossipClient;
-import github.com.mstepan.gossip.command.digest.MessageWrapper;
-import github.com.mstepan.gossip.command.digest.SynRequest;
-import github.com.mstepan.gossip.command.digest.SynResponse;
+import github.com.mstepan.gossip.command.digest.Ack;
+import github.com.mstepan.gossip.command.digest.GossipMessage;
+import github.com.mstepan.gossip.command.digest.Syn;
 import github.com.mstepan.gossip.state.HostInfo;
 import github.com.mstepan.gossip.state.NodeGlobalState;
 import github.com.mstepan.gossip.state.NodeGlobalStateSnapshot;
@@ -71,12 +71,12 @@ public class GossipScheduledTask implements Runnable {
     private void startGossipConversation(
             HostInfo singleNode, NodeGlobalStateSnapshot stateSnapshot) {
         try (GossipClient client = GossipClient.newInstance(singleNode.host(), singleNode.port())) {
-            SynRequest.Builder synRequestBuilder = SynRequest.newBuilder();
+            Syn.Builder synRequestBuilder = Syn.newBuilder();
 
-            MessageWrapper message =
-                    MessageWrapper.newBuilder().setSynRequest(synRequestBuilder.build()).build();
+            GossipMessage message =
+                    GossipMessage.newBuilder().setSyn(synRequestBuilder.build()).build();
 
-            SynResponse synResponse = client.sendMessage(message);
+            Ack ackMessage = client.sendMessage(message);
 
             System.out.printf("Gossip conversation completed with host: %s%n", singleNode);
 
