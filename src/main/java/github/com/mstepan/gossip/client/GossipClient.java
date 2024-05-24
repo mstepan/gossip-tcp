@@ -1,6 +1,5 @@
 package github.com.mstepan.gossip.client;
 
-import github.com.mstepan.gossip.command.digest.Ack;
 import github.com.mstepan.gossip.command.digest.DigestLine;
 import github.com.mstepan.gossip.command.digest.GossipMessage;
 import github.com.mstepan.gossip.command.digest.Syn;
@@ -44,14 +43,12 @@ public class GossipClient implements AutoCloseable {
         NetworkUtils.closeSilently(socket);
     }
 
-    public Ack sendMessage(GossipMessage message) {
+    public GossipMessage sendMessage(GossipMessage requestMessage) {
         try {
-            message.writeTo(out);
+            requestMessage.writeTo(out);
             out.flush();
 
-            Ack ackMessage = Ack.newBuilder().build();
-
-            return ackMessage;
+            return GossipMessage.newBuilder().mergeFrom(in).build();
         } catch (IOException ioEx) {
             throw new IllegalStateException(ioEx);
         }
@@ -66,7 +63,7 @@ public class GossipClient implements AutoCloseable {
                             .setHost("192.168.1.1")
                             .setPort(5001)
                             .setGeneration(Instant.now().getEpochSecond())
-                            .setHeartbit(5L)
+                            .setHeartbeat(5L)
                             .build();
 
             DigestLine digestLine2 =
@@ -74,7 +71,7 @@ public class GossipClient implements AutoCloseable {
                             .setHost("192.168.1.1")
                             .setPort(5002)
                             .setGeneration(Instant.now().getEpochSecond())
-                            .setHeartbit(3L)
+                            .setHeartbeat(3L)
                             .build();
 
             Syn synMessage =

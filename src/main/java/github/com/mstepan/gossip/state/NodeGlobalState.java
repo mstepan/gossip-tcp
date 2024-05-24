@@ -2,6 +2,7 @@ package github.com.mstepan.gossip.state;
 
 import static github.com.mstepan.gossip.util.Preconditions.checkNotNull;
 
+import github.com.mstepan.gossip.command.digest.DigestLine;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,5 +96,15 @@ public enum NodeGlobalState {
         endpoints.put(currentHostAndPort, newEndpointState);
 
         return new NodeGlobalStateSnapshot(newEndpointState.heartbeat());
+    }
+
+    public synchronized List<DigestLine> createDigest() {
+        List<DigestLine> digest = new ArrayList<>();
+
+        for (EndpointState endpoint : endpoints.values()) {
+            digest.add(endpoint.toDigestCompact());
+        }
+
+        return digest;
     }
 }

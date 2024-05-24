@@ -10,9 +10,7 @@ option java_package = "github.com.mstepan.gossip.command.digest";
 message GossipMessage {
   oneof msg {
     Syn syn = 2;
-
     Ack ack = 3;
-
     Ack2 ack2 = 4;
   }
 }
@@ -22,20 +20,26 @@ message Syn {
   repeated DigestLine digests = 1;
 }
 
-message DigestLine {
-  string host = 1;
-  uint32 port = 2;
-  uint64 generation = 3;
-  uint64 heartbit = 4;
-}
-
-
 // ================================ ACK =============================================================================
 message Ack {
+  repeated DigestLine digests = 1;
 }
 
 
 // ================================ ACK2 =============================================================================
 message Ack2 {
+  repeated DigestLine digests = 1;
 }
+
+// ================================ Digest ===========================================================================
+message DigestLine {
+  string host = 1;
+  uint32 port = 2;
+  uint64 generation = 3;
+  uint64 heartbeat = 4;
+  map<string, string> metadata = 5;
+}
+
+
+
 

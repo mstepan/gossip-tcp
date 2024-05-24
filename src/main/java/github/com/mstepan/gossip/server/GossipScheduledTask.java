@@ -1,7 +1,7 @@
 package github.com.mstepan.gossip.server;
 
 import github.com.mstepan.gossip.client.GossipClient;
-import github.com.mstepan.gossip.command.digest.Ack;
+import github.com.mstepan.gossip.command.digest.DigestLine;
 import github.com.mstepan.gossip.command.digest.GossipMessage;
 import github.com.mstepan.gossip.command.digest.Syn;
 import github.com.mstepan.gossip.state.HostInfo;
@@ -71,12 +71,18 @@ public class GossipScheduledTask implements Runnable {
     private void startGossipConversation(
             HostInfo singleNode, NodeGlobalStateSnapshot stateSnapshot) {
         try (GossipClient client = GossipClient.newInstance(singleNode.host(), singleNode.port())) {
-            Syn.Builder synRequestBuilder = Syn.newBuilder();
 
-            GossipMessage message =
-                    GossipMessage.newBuilder().setSyn(synRequestBuilder.build()).build();
+            List<DigestLine> curDigest = NodeGlobalState.INST.createDigest();
 
-            Ack ackMessage = client.sendMessage(message);
+            Syn.Builder synBuilder = Syn.newBuilder();
+            for (DigestLine digestLine : curDigest) {
+                synBuilder.addDigests(digestLine);
+            }
+
+            GossipMessage synMessageRequest =
+                    GossipMessage.newBuilder().setSyn(synBuilder.build()).build();
+
+            GossipMessage ackMessageResponse = client.sendMessage(synMessageRequest);
 
             System.out.printf("Gossip conversation completed with host: %s%n", singleNode);
 
