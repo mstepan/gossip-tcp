@@ -8,10 +8,8 @@ import github.com.mstepan.gossip.command.digest.Syn;
 import github.com.mstepan.gossip.state.DigestDiffCalculator;
 import github.com.mstepan.gossip.state.NodeGlobalState;
 import github.com.mstepan.gossip.util.NetworkUtils;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,12 +25,17 @@ final class GossipConversationHandler implements Runnable {
     @Override
     public void run() {
         try {
-            try (InputStream in = new BufferedInputStream(clientSocket.getInputStream());
-                    OutputStream out = new BufferedOutputStream(clientSocket.getOutputStream())) {
+            try (DataInputStream in = NetworkUtils.socketInputStream(clientSocket);
+                    DataOutputStream out = NetworkUtils.socketOutputStream(clientSocket)) {
 
                 System.out.printf("Gossip conversation started%n");
 
-                GossipMessage request = GossipMessage.newBuilder().mergeFrom(in).build();
+                int dataLength = in.readInt();
+
+                byte[] rawData = new byte[dataLength];
+                in.readNBytes(rawData, 0, rawData.length);
+
+                GossipMessage request = GossipMessage.newBuilder().mergeFrom(rawData).build();
 
                 System.out.printf("Gossip message received%n");
 
@@ -59,23 +62,13 @@ final class GossipConversationHandler implements Runnable {
 
                     GossipMessage response =
                             GossipMessage.newBuilder().setAck(ackMessageBuilder.build()).build();
-                    response.writeTo(out);
-                    out.flush();
-                }
-                //                else if (request.hasAck()) {
-                //                    // handle ACK
-                //                    Ack ackMessage = request.getAck();
-                //                    printDigest("ACK", ackMessage.getDigestsList());
-                //
-                //                    GossipMessage response = GossipMessage.newBuilder().build();
-                //                    response.writeTo(out);
-                //                    out.flush();
-                //
-                //                    // TODO:
-                //                }
-                else if (request.hasAck2()) {
-                    // handle ACK2
 
+                    byte[] rawResponse = response.toByteArray();
+                    out.writeInt(rawResponse.length);
+                    out.write(rawResponse);
+                    out.flush();
+                } else if (request.hasAck2()) {
+                    // handle ACK2
                     Ack2 ack2Message = request.getAck2();
                     printDigest("ACK2", ack2Message.getDigestsList());
 

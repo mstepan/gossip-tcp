@@ -1,22 +1,20 @@
 package github.com.mstepan.gossip.client;
 
-import github.com.mstepan.gossip.command.digest.DigestLine;
 import github.com.mstepan.gossip.command.digest.GossipMessage;
 import github.com.mstepan.gossip.command.digest.Syn;
 import github.com.mstepan.gossip.util.NetworkUtils;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
-import java.time.Instant;
 
 public class GossipClient implements AutoCloseable {
 
     private final Socket socket;
 
-    private final InputStream in;
+    private final DataInputStream in;
 
-    private final OutputStream out;
+    private final DataOutputStream out;
 
     public static GossipClient newInstance(String host, int port) {
         try {
@@ -41,13 +39,18 @@ public class GossipClient implements AutoCloseable {
         NetworkUtils.closeSilently(socket);
     }
 
-    public GossipMessage sendMessage(GossipMessage request) {
+    public GossipMessage sendSynMessage(GossipMessage request) {
         try {
-            request.writeTo(out);
+            byte[] rawRequest = request.toByteArray();
+            out.writeInt(rawRequest.length);
+            out.write(rawRequest);
             out.flush();
 
-            GossipMessage response = GossipMessage.newBuilder().mergeFrom(in).build();
-            return response;
+            int responseLength = in.readInt();
+            byte[] rawResponse = new byte[responseLength];
+            in.readNBytes(rawResponse, 0, rawResponse.length);
+
+            return GossipMessage.newBuilder().mergeFrom(rawResponse).build();
         } catch (IOException ioEx) {
             throw new IllegalStateException(ioEx);
         }
@@ -57,28 +60,30 @@ public class GossipClient implements AutoCloseable {
         try (GossipClient client =
                 GossipClient.newInstance(
                         NetworkUtils.getHostAddress().getCanonicalHostName(), 5001)) {
-            DigestLine digestLine1 =
-                    DigestLine.newBuilder()
-                            .setHost("192.168.1.1")
-                            .setPort(5001)
-                            .setGeneration(Instant.now().getEpochSecond())
-                            .setHeartbeat(5L)
-                            .build();
+            //            DigestLine digestLine1 =
+            //                    DigestLine.newBuilder()
+            //                            .setHost("192.168.1.1")
+            //                            .setPort(5001)
+            //                            .setGeneration(Instant.now().getEpochSecond())
+            //                            .setHeartbeat(5L)
+            //                            .build();
+            //
+            //            DigestLine digestLine2 =
+            //                    DigestLine.newBuilder()
+            //                            .setHost("192.168.1.1")
+            //                            .setPort(5002)
+            //                            .setGeneration(Instant.now().getEpochSecond())
+            //                            .setHeartbeat(3L)
+            //                            .build();
 
-            DigestLine digestLine2 =
-                    DigestLine.newBuilder()
-                            .setHost("192.168.1.1")
-                            .setPort(5002)
-                            .setGeneration(Instant.now().getEpochSecond())
-                            .setHeartbeat(3L)
-                            .build();
-
-            Syn synMessage =
-                    Syn.newBuilder().addDigests(digestLine1).addDigests(digestLine2).build();
+            Syn synMessage = Syn.newBuilder().build();
 
             GossipMessage message = GossipMessage.newBuilder().setSyn(synMessage).build();
 
-            client.sendMessage(message);
+            GossipMessage response = client.sendSynMessage(message);
+
+            System.out.printf("Response: %s%n", response);
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }

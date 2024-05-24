@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class GossipScheduledTask implements Runnable {
 
     /** The initial delay before we start sending gossip messages to other nodes. */
-    private static final long INITIAL_DELAY_IN_MS = 1000L;
+    private static final long INITIAL_DELAY_IN_MS = 10_000L;
 
     /** Number of host that will be used for a single gossip cycle. */
     private static final int HOST_GOSSIP_COUNT = 3;
@@ -85,7 +85,7 @@ public class GossipScheduledTask implements Runnable {
                     GossipMessage.newBuilder().setSyn(synBuilder.build()).build();
 
             // Send SYN message
-            GossipMessage ackMessageResponse = client.sendMessage(synMessageRequest);
+            GossipMessage ackMessageResponse = client.sendSynMessage(synMessageRequest);
 
             // TODO: handle ACK message here, merge all required info, add request info to response
 
@@ -93,7 +93,7 @@ public class GossipScheduledTask implements Runnable {
             GossipMessage ack2MessageRequest =
                     GossipMessage.newBuilder().setAck2(Ack2.newBuilder().build()).build();
 
-            client.sendMessage(ack2MessageRequest);
+            client.sendSynMessage(ack2MessageRequest);
 
             System.out.printf("Gossip conversation OK with host: %s%n", singleNode);
 
