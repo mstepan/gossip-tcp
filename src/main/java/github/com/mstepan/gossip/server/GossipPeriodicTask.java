@@ -6,9 +6,9 @@ import github.com.mstepan.gossip.command.digest.Ack2;
 import github.com.mstepan.gossip.command.digest.DigestLine;
 import github.com.mstepan.gossip.command.digest.GossipMessage;
 import github.com.mstepan.gossip.command.digest.Syn;
+import github.com.mstepan.gossip.state.HearbeatState;
 import github.com.mstepan.gossip.state.HostInfo;
 import github.com.mstepan.gossip.state.NodeGlobalState;
-import github.com.mstepan.gossip.state.NodeGlobalStateSnapshot;
 import github.com.mstepan.gossip.util.ThreadUtils;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -16,13 +16,13 @@ import java.util.concurrent.TimeUnit;
 public class GossipPeriodicTask implements Runnable {
 
     /** The initial delay before we start sending gossip messages to other nodes. */
-    private static final long INITIAL_DELAY_IN_MS = 5_000L;
+    public static final long INITIAL_DELAY_IN_MS = 5_000L;
 
     /** Number of host that will be used for a single gossip cycle. */
     private static final int HOST_GOSSIP_COUNT = 3;
 
     /** Single gossip cycle period. Should be 1 sec after testing. */
-    private static final long GOSSIP_CYCLE_PERIOD_IN_MS = 10_000L;
+    public static final long GOSSIP_CYCLE_PERIOD_IN_MS = 1000L;
 
     @Override
     public void run() {
@@ -35,12 +35,10 @@ public class GossipPeriodicTask implements Runnable {
 
                 // System.out.printf("Selected peers: %s%n", peersToGossip);
 
-                NodeGlobalStateSnapshot nodeGlobalStateSnapshot =
-                        NodeGlobalState.INST.recordCycle();
+                HearbeatState newHearbeatState = NodeGlobalState.INST.recordCycle();
 
                 System.out.println("===========================================================");
-                System.out.printf(
-                        "Gossip cycle: %d%n", nodeGlobalStateSnapshot.heartbeat().version());
+                System.out.printf("Gossip cycle: %d%n", newHearbeatState.version());
                 System.out.println("===========================================================");
 
                 for (HostInfo singleNode : peersToGossip) {

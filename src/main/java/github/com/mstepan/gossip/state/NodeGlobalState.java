@@ -3,6 +3,7 @@ package github.com.mstepan.gossip.state;
 import static github.com.mstepan.gossip.util.Preconditions.checkNotNull;
 
 import github.com.mstepan.gossip.command.digest.DigestLine;
+import github.com.mstepan.gossip.server.GossipPeriodicTask;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,7 +38,7 @@ public enum NodeGlobalState {
                         hostInfo,
                         new HearbeatState(Instant.now().getEpochSecond(), 0),
                         new ApplicationState(
-                                ApplicationState.AppStatus.BOOTSTRAP,
+                                HostStatus.BOOTSTRAP,
                                 Map.of(
                                         "DISK_USAGE",
                                         "0%",
@@ -48,7 +49,7 @@ public enum NodeGlobalState {
     public synchronized void addNode(HostInfo hostInfo) {
         System.out.printf("Node added %s%n", hostInfo);
         checkNotNull(hostInfo, "Can't add null 'host'.");
-        putEndpoint(new EndpointState(hostInfo, HearbeatState.EMPTY, ApplicationState.EMPTY));
+        putEndpoint(new EndpointState(hostInfo, new HearbeatState(0L, 0L), new ApplicationState()));
     }
 
     /**
@@ -76,19 +77,19 @@ public enum NodeGlobalState {
         return randomSelection;
     }
 
-    public synchronized NodeGlobalStateSnapshot recordCycle() {
+    public synchronized HearbeatState recordCycle() {
         EndpointState currentEndpointState = endpoints.get(currentHostAndPort);
 
-        // set new HeartBit state value
+        // set new Heartbeat state value
         currentEndpointState.heartbeat(currentEndpointState.heartbeat().next());
 
         // wait at least 3 gossip iterations till mark application status as NORMAL
         if (currentEndpointState.heartbeat().version() == 3L) {
-            currentEndpointState.application().status(ApplicationState.AppStatus.NORMAL);
+            currentEndpointState.application().status(HostStatus.NORMAL);
             currentEndpointState.application().addMetadata("DISK_USAGE", "50%");
         }
 
-        return new NodeGlobalStateSnapshot(currentEndpointState.heartbeat());
+        return currentEndpointState.heartbeat();
     }
 
     public synchronized List<DigestLine> createDigest() {
@@ -134,8 +135,7 @@ public enum NodeGlobalState {
                                 new HearbeatState(
                                         receivedDigestLine.getGeneration(),
                                         receivedDigestLine.getHeartbeat()),
-                                new ApplicationState(
-                                        ApplicationState.AppStatus.NORMAL, receivedMetadata));
+                                new ApplicationState(HostStatus.NORMAL, receivedMetadata));
 
                 endpoints.put(endpointKey, newState);
             } else {
@@ -147,16 +147,13 @@ public enum NodeGlobalState {
 
                 // cur digest is older, so update with a new state from received digest
                 if (cmpRes < 0) {
-                    EndpointState newState =
-                            new EndpointState(
-                                    endpointState.host(),
-                                    new HearbeatState(
-                                            receivedDigestLine.getGeneration(),
-                                            receivedDigestLine.getHeartbeat()),
-                                    new ApplicationState(
-                                            ApplicationState.AppStatus.NORMAL, receivedMetadata));
 
-                    endpoints.put(endpointKey, newState);
+                    endpointState.heartbeat(
+                            new HearbeatState(
+                                    receivedDigestLine.getGeneration(),
+                                    receivedDigestLine.getHeartbeat()));
+
+                    endpointState.application().replaceMetadata(receivedMetadata);
                 }
             }
         }
@@ -180,7 +177,7 @@ public enum NodeGlobalState {
 
     public synchronized void recalculateStates() {
 
-        final long now = Instant.now().getEpochSecond();
+        final long nowInSec = Instant.now().getEpochSecond();
 
         for (EndpointState endpointState : endpoints.values()) {
 
@@ -190,14 +187,15 @@ public enum NodeGlobalState {
                 continue;
             }
 
-            long generationDelta = endpointState.heartbeat().calculateDelta(now);
+            long generationDeltaInSec = endpointState.heartbeat().calculateDelta(nowInSec);
 
-            // node generation value wasn't updated for 10 seconds, probably node is DOWN
-            if (generationDelta >= 10L) {
-                endpointState.application().status(ApplicationState.AppStatus.LEFT);
+            // node generation value wasn't updated for at least 10 gossip cycles, probably node is
+            // DOWN
+            if (generationDeltaInSec * 1000 >= 10 * GossipPeriodicTask.GOSSIP_CYCLE_PERIOD_IN_MS) {
+                endpointState.application().status(HostStatus.DOWN);
             } else {
                 // mark node as normal state
-                endpointState.application().status(ApplicationState.AppStatus.NORMAL);
+                endpointState.application().status(HostStatus.NORMAL);
             }
         }
     }

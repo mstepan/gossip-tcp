@@ -6,20 +6,18 @@ import java.util.concurrent.TimeUnit;
 
 public class NodeStatusTrackerTask implements Runnable {
 
-    private static final long INITIAL_DELAY_IN_MS = 5_000L;
-
     @Override
     public void run() {
         System.out.printf("%s started%n", Thread.currentThread().getName());
 
-        ThreadUtils.sleepMs(INITIAL_DELAY_IN_MS);
+        ThreadUtils.sleepMs(GossipPeriodicTask.INITIAL_DELAY_IN_MS);
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
 
                 NodeGlobalState.INST.recalculateStates();
 
-                TimeUnit.MILLISECONDS.sleep(2000L);
+                TimeUnit.MILLISECONDS.sleep(GossipPeriodicTask.GOSSIP_CYCLE_PERIOD_IN_MS);
             } catch (InterruptedException interEx) {
                 Thread.currentThread().interrupt();
             }

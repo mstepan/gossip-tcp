@@ -1,6 +1,7 @@
 package github.com.mstepan.gossip.state;
 
 import github.com.mstepan.gossip.command.digest.DigestLine;
+import java.util.Objects;
 
 public final class EndpointState {
 
@@ -48,5 +49,20 @@ public final class EndpointState {
                 .setHeartbeat(heartbeat.version())
                 .putAllMetadata(application.metadataCopy())
                 .build();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EndpointState that = (EndpointState) o;
+        return Objects.equals(host, that.host)
+                && Objects.equals(heartbeat, that.heartbeat)
+                && Objects.equals(application, that.application);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(host, heartbeat, application);
     }
 }
