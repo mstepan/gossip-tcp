@@ -39,18 +39,22 @@ final class GossipServerHandler implements Runnable {
                     // handle SYN request
                     Syn synMessage = request.getSyn();
 
-                    printDigest("SYN", synMessage.getDigestsList());
+                    //                    printDigest("SYN", synMessage.getDigestsList());
 
                     // write ACK request
                     Ack.Builder ackMessageBuilder = Ack.newBuilder();
 
-                    List<DigestLine> curNodeDigest = NodeGlobalState.INST.createDigest();
+                    List<DigestLine> curNodeDigest =
+                            NodeGlobalState.INST.createDigestWithMetadata();
 
-                    // TODO: UnsupportedOperationException here
+                    // Make copy using ArrayList, otherwise UnsupportedOperationException will be
+                    // thrown
                     List<DigestLine> receivedDigest = new ArrayList<>(synMessage.getDigestsList());
 
                     List<DigestLine> diff =
                             DigestDiffCalculator.diff(curNodeDigest, receivedDigest);
+
+                    //                    printDigest("DIFF", diff);
 
                     for (DigestLine diffLine : diff) {
                         ackMessageBuilder.addDigests(diffLine);
@@ -83,10 +87,10 @@ final class GossipServerHandler implements Runnable {
 
     private void printDigest(String messageType, List<DigestLine> digest) {
         System.out.printf(
-                "========================= %s digest received=========================%n",
+                "============================ %s digest =================================%n",
                 messageType);
         for (DigestLine digestLine : digest) {
-            System.out.printf("Line: %s%n", digestLine);
+            System.out.printf("%s%n", digestLine);
         }
         System.out.printf(
                 "======================================================================%n");

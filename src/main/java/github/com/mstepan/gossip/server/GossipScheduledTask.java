@@ -1,6 +1,7 @@
 package github.com.mstepan.gossip.server;
 
 import github.com.mstepan.gossip.client.GossipClient;
+import github.com.mstepan.gossip.command.digest.Ack;
 import github.com.mstepan.gossip.command.digest.Ack2;
 import github.com.mstepan.gossip.command.digest.DigestLine;
 import github.com.mstepan.gossip.command.digest.GossipMessage;
@@ -37,6 +38,8 @@ public class GossipScheduledTask implements Runnable {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 List<HostInfo> peersToGossip = NodeGlobalState.INST.randomPeers(HOST_GOSSIP_COUNT);
+
+                // System.out.printf("Selected peers: %s%n", peersToGossip);
 
                 NodeGlobalStateSnapshot nodeGlobalStateSnapshot =
                         NodeGlobalState.INST.recordCycle();
@@ -85,9 +88,21 @@ public class GossipScheduledTask implements Runnable {
                     GossipMessage.newBuilder().setSyn(synBuilder.build()).build();
 
             // Send SYN message
-            GossipMessage ackMessageResponse = client.sendSynMessage(synMessageRequest);
+            GossipMessage synResponse = client.sendSynMessage(synMessageRequest);
+
+            if (!synResponse.hasAck()) {
+                throw new IllegalStateException(
+                        "SYN message returned incorrect response. Expected ACK.");
+            }
 
             // TODO: handle ACK message here, merge all required info, add request info to response
+
+            Ack ackResponse = synResponse.getAck();
+
+            System.out.println("============= ACK received ============== ");
+            for (DigestLine digestLine : ackResponse.getDigestsList()) {
+                System.out.println(digestLine);
+            }
 
             // Send ACK2 message
             GossipMessage ack2MessageRequest =

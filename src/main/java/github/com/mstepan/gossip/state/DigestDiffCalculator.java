@@ -17,59 +17,62 @@ public final class DigestDiffCalculator {
                     .thenComparingLong(DigestLine::getHeartbeat);
 
     /**
-     * @param base - represents current node digest
-     * @param other - represents received from anotehr node digest.
+     * @param cur - represents current node digest
+     * @param other - represents received from another node digest.
      * @return the difference between 2 digests.
      */
-    public static List<DigestLine> diff(List<DigestLine> base, List<DigestLine> other) {
-        Preconditions.checkNotNull(
-                base, "Can't calculate digest difference, 'base' digest is null");
+    public static List<DigestLine> diff(List<DigestLine> cur, List<DigestLine> other) {
+        Preconditions.checkNotNull(cur, "Can't calculate digest difference, 'base' digest is null");
         Preconditions.checkNotNull(
                 other, "Can't calculate digest difference, 'other' digest is null");
 
-        base.sort(HOST_PORT_ASC);
+        // Sort both lists so that we can do merge using single pass
+        cur.sort(HOST_PORT_ASC);
         other.sort(HOST_PORT_ASC);
 
-        Iterator<DigestLine> baseIt = base.iterator();
+        Iterator<DigestLine> curIt = cur.iterator();
         Iterator<DigestLine> otherIt = other.iterator();
 
         List<DigestLine> digestDiff = new ArrayList<>();
 
-        DigestLine baseLast = nextOrNull(baseIt);
+        DigestLine curLast = nextOrNull(curIt);
         DigestLine otherLast = nextOrNull(otherIt);
 
-        while (!(baseLast == null && otherLast == null)) {
+        while (!(curLast == null && otherLast == null)) {
 
-            if (baseLast == null) {
+            if (curLast == null) {
                 digestDiff.add(otherLast);
                 otherLast = nextOrNull(otherIt);
             } else if (otherLast == null) {
-                digestDiff.add(baseLast);
-                baseLast = nextOrNull(baseIt);
+                digestDiff.add(curLast);
+                curLast = nextOrNull(curIt);
             } else {
 
                 // handling digest for the same host
-                if (isSameHost(baseLast, otherLast)) {
+                if (isSameHost(curLast, otherLast)) {
 
-                    int digestCmpRes = GENERATION_THEN_HEARTBEAT_ASC.compare(baseLast, otherLast);
+                    int digestCmpRes = GENERATION_THEN_HEARTBEAT_ASC.compare(curLast, otherLast);
 
-                    // 'baseLast' has newer data
+                    // 'curLast' has newer data, send digest line with metadata
                     if (digestCmpRes > 0) {
-                        digestDiff.add(baseLast);
+                        digestDiff.add(curLast);
                     }
-                    // 'otherLast' has newer data
+                    // 'curLast' has older data, send digest line without metadata
                     else if (digestCmpRes < 0) {
-                        digestDiff.add(otherLast);
+                        digestDiff.add(removeMetadata(curLast));
                     }
+
+                    curLast = nextOrNull(curIt);
+                    otherLast = nextOrNull(otherIt);
                 }
                 // different hosts, add the smallest hosts as new to a digest difference
                 else {
-                    int digestHostCmpRes = HOST_PORT_ASC.compare(baseLast, otherLast);
+                    int digestHostCmpRes = HOST_PORT_ASC.compare(curLast, otherLast);
 
                     // move 'baseLast' forward
                     if (digestHostCmpRes > 0) {
-                        digestDiff.add(baseLast);
-                        baseLast = nextOrNull(baseIt);
+                        digestDiff.add(curLast);
+                        curLast = nextOrNull(curIt);
                     }
                     // move 'otherLast' forward
                     else {
@@ -81,6 +84,15 @@ public final class DigestDiffCalculator {
         }
 
         return digestDiff;
+    }
+
+    private static DigestLine removeMetadata(DigestLine line) {
+        return DigestLine.newBuilder()
+                .setHost(line.getHost())
+                .setPort(line.getPort())
+                .setGeneration(line.getGeneration())
+                .setHeartbeat(line.getHeartbeat())
+                .build();
     }
 
     private static boolean isSameHost(DigestLine left, DigestLine right) {

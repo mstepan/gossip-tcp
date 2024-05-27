@@ -106,4 +106,14 @@ public enum NodeGlobalState {
 
         return digest;
     }
+
+    public synchronized List<DigestLine> createDigestWithMetadata() {
+        List<DigestLine> digest = new ArrayList<>();
+
+        for (EndpointState endpoint : endpoints.values()) {
+            digest.add(endpoint.toDigestFull());
+        }
+
+        return digest;
+    }
 }
