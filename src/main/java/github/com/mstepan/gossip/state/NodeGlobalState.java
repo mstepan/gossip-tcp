@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Tracks gossip host state and associated metadata. Should be thread-safe. We will leverage
@@ -83,7 +84,8 @@ public enum NodeGlobalState {
         if (currentEndpointState.heartbeat().version() == 3L) {
             ApplicationState newAppState =
                     new ApplicationState(
-                            ApplicationState.AppStatus.NORMAL, Map.of("DISK_USAGE", "50%"));
+                            ApplicationState.AppStatus.NORMAL,
+                            Map.of("DISK_USAGE", "50%", "NODE_ID", UUID.randomUUID().toString()));
             newEndpointState =
                     new EndpointState(currentEndpointState.host(), newHeartbeat, newAppState);
         } else {

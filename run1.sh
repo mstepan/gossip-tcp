@@ -7,4 +7,5 @@ java -jar "$(find -E target -regex '.*/gossip-tcp-.+\.jar$')" \
   --port=5001 \
   --seeds 192.168.1.176:5001 \
   --seeds 192.168.1.176:5002 \
+  --seeds 192.168.1.176:5003 \
   --gossip
