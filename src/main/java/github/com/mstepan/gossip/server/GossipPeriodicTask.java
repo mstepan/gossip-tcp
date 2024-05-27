@@ -9,10 +9,11 @@ import github.com.mstepan.gossip.command.digest.Syn;
 import github.com.mstepan.gossip.state.HostInfo;
 import github.com.mstepan.gossip.state.NodeGlobalState;
 import github.com.mstepan.gossip.state.NodeGlobalStateSnapshot;
+import github.com.mstepan.gossip.util.ThreadUtils;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class GossipScheduledTask implements Runnable {
+public class GossipPeriodicTask implements Runnable {
 
     /** The initial delay before we start sending gossip messages to other nodes. */
     private static final long INITIAL_DELAY_IN_MS = 5_000L;
@@ -23,17 +24,10 @@ public class GossipScheduledTask implements Runnable {
     /** Single gossip cycle period. Should be 1 sec after testing. */
     private static final long GOSSIP_CYCLE_PERIOD_IN_MS = 10_000L;
 
-    public static Thread createThread() {
-        Thread gossipThread = new Thread(new GossipScheduledTask());
-        gossipThread.setName("GossipScheduledTask");
-        gossipThread.setDaemon(true);
-        return gossipThread;
-    }
-
     @Override
     public void run() {
-        System.out.println("Gossip task started");
-        initialSleep();
+        System.out.printf("%s started%n", Thread.currentThread().getName());
+        ThreadUtils.sleepMs(INITIAL_DELAY_IN_MS);
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
@@ -50,9 +44,10 @@ public class GossipScheduledTask implements Runnable {
                 System.out.println("===========================================================");
 
                 for (HostInfo singleNode : peersToGossip) {
-                    startGossipConversation(singleNode, nodeGlobalStateSnapshot);
-                    NodeGlobalState.INST.printState();
+                    startGossipConversation(singleNode);
                 }
+
+                NodeGlobalState.INST.printState();
 
                 TimeUnit.MILLISECONDS.sleep(GOSSIP_CYCLE_PERIOD_IN_MS);
             } catch (InterruptedException interEx) {
@@ -64,17 +59,7 @@ public class GossipScheduledTask implements Runnable {
         System.out.println("Gossip task completed");
     }
 
-    private static void initialSleep() {
-        try {
-            TimeUnit.MILLISECONDS.sleep(INITIAL_DELAY_IN_MS);
-        } catch (InterruptedException interEx) {
-            // if interrupted, just propagate interruption flag
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    private void startGossipConversation(
-            HostInfo singleNode, NodeGlobalStateSnapshot stateSnapshot) {
+    private void startGossipConversation(HostInfo singleNode) {
 
         try (GossipClient client = GossipClient.newInstance(singleNode.host(), singleNode.port())) {
 
@@ -113,11 +98,12 @@ public class GossipScheduledTask implements Runnable {
 
             client.sendAck2Message(ack2MessageRequest);
 
-            System.out.printf("Gossip conversation COMPLETED with host: %s%n", singleNode);
+            //            System.out.printf("<==> Gossip conversation COMPLETED with host: %s%n",
+            // singleNode);
 
         } catch (Exception ex) {
-            ex.printStackTrace();
-            System.out.printf("Gossip conversation FAILED with host: %s%n", singleNode);
+            //            ex.printStackTrace();
+            System.out.printf("<==??==> Gossip conversation FAILED with host: %s%n", singleNode);
         }
     }
 }

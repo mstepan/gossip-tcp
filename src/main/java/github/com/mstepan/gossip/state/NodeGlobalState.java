@@ -37,15 +37,18 @@ public enum NodeGlobalState {
                         hostInfo,
                         new HearbeatState(Instant.now().getEpochSecond(), 0),
                         new ApplicationState(
-                                ApplicationState.AppStatus.BOOTSTRAP, Map.of("DISK_USAGE", "0%"))));
+                                ApplicationState.AppStatus.BOOTSTRAP,
+                                Map.of(
+                                        "DISK_USAGE",
+                                        "0%",
+                                        "NODE_ID",
+                                        UUID.randomUUID().toString()))));
     }
 
     public synchronized void addNode(HostInfo hostInfo) {
         System.out.printf("Node added %s%n", hostInfo);
         checkNotNull(hostInfo, "Can't add null 'host'.");
-        endpoints.put(
-                hostInfo.hostAndPort(),
-                new EndpointState(hostInfo, HearbeatState.EMPTY, ApplicationState.EMPTY));
+        putEndpoint(new EndpointState(hostInfo, HearbeatState.EMPTY, ApplicationState.EMPTY));
     }
 
     /**
@@ -65,7 +68,7 @@ public enum NodeGlobalState {
             Map.Entry<String, EndpointState> singleEntry = shuffledNodesIt.next();
 
             // skip current host if specified as a SEED
-            if (!singleEntry.getValue().host().hostAndPort().equals(currentHostAndPort)) {
+            if (notCurrentNode(singleEntry.getValue())) {
                 randomSelection.add(singleEntry.getValue().host());
             }
         }
@@ -75,30 +78,17 @@ public enum NodeGlobalState {
 
     public synchronized NodeGlobalStateSnapshot recordCycle() {
         EndpointState currentEndpointState = endpoints.get(currentHostAndPort);
-        EndpointState newEndpointState;
 
         // set new HeartBit state value
-        HearbeatState newHeartbeat = currentEndpointState.heartbeat().next();
+        currentEndpointState.heartbeat(currentEndpointState.heartbeat().next());
 
         // wait at least 3 gossip iterations till mark application status as NORMAL
         if (currentEndpointState.heartbeat().version() == 3L) {
-            ApplicationState newAppState =
-                    new ApplicationState(
-                            ApplicationState.AppStatus.NORMAL,
-                            Map.of("DISK_USAGE", "50%", "NODE_ID", UUID.randomUUID().toString()));
-            newEndpointState =
-                    new EndpointState(currentEndpointState.host(), newHeartbeat, newAppState);
-        } else {
-            newEndpointState =
-                    new EndpointState(
-                            currentEndpointState.host(),
-                            newHeartbeat,
-                            currentEndpointState.application());
+            currentEndpointState.application().status(ApplicationState.AppStatus.NORMAL);
+            currentEndpointState.application().addMetadata("DISK_USAGE", "50%");
         }
 
-        endpoints.put(currentHostAndPort, newEndpointState);
-
-        return new NodeGlobalStateSnapshot(newEndpointState.heartbeat());
+        return new NodeGlobalStateSnapshot(currentEndpointState.heartbeat());
     }
 
     public synchronized List<DigestLine> createDigest() {
@@ -178,11 +168,53 @@ public enum NodeGlobalState {
         for (EndpointState endpointState : endpoints.values()) {
             System.out.println(
                     "===================================================================");
-            System.out.printf("Host: %s%n", endpointState.host().hostAndPort());
-            System.out.printf("Heartbeat: %s%n", endpointState.heartbeat());
-            System.out.printf("Application state: %s%n", endpointState.application());
+            System.out.printf(
+                    "[%s] -> %s -> %s %n",
+                    endpointState.host().hostAndPort(),
+                    endpointState.heartbeat(),
+                    endpointState.application());
             System.out.println(
                     "===================================================================");
         }
+    }
+
+    public synchronized void recalculateStates() {
+
+        final long now = Instant.now().getEpochSecond();
+
+        for (EndpointState endpointState : endpoints.values()) {
+
+            // Skip any state recalculation for the current node, current node status will be set
+            // explicitly
+            if (isCurrentNode(endpointState)) {
+                continue;
+            }
+
+            long generationDelta = endpointState.heartbeat().calculateDelta(now);
+
+            // node generation value wasn't updated for 10 seconds, probably node is DOWN
+            if (generationDelta >= 10L) {
+                endpointState.application().status(ApplicationState.AppStatus.LEFT);
+            } else {
+                // mark node as normal state
+                endpointState.application().status(ApplicationState.AppStatus.NORMAL);
+            }
+        }
+    }
+
+    /**
+     * 'putEndpoint' method can be un-synchronized b/c will be used only from public methods that
+     * all MUST be synchronized.
+     */
+    private void putEndpoint(EndpointState endpoint) {
+        endpoints.put(endpoint.host().hostAndPort(), endpoint);
+    }
+
+    private boolean isCurrentNode(EndpointState endpoint) {
+        return endpoint.host().hostAndPort().equals(currentHostAndPort);
+    }
+
+    private boolean notCurrentNode(EndpointState endpoint) {
+        return !isCurrentNode(endpoint);
     }
 }

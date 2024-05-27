@@ -2,13 +2,15 @@ package github.com.mstepan.gossip;
 
 import static github.com.mstepan.gossip.util.Preconditions.checkArgument;
 
-import github.com.mstepan.gossip.server.GossipScheduledTask;
+import github.com.mstepan.gossip.server.GossipPeriodicTask;
 import github.com.mstepan.gossip.server.GossipServer;
+import github.com.mstepan.gossip.server.NodeStatusTrackerTask;
 import github.com.mstepan.gossip.state.HostInfo;
 import github.com.mstepan.gossip.state.HostType;
 import github.com.mstepan.gossip.state.NodeGlobalState;
 import github.com.mstepan.gossip.util.NetworkUtils;
 import github.com.mstepan.gossip.util.Preconditions;
+import github.com.mstepan.gossip.util.ThreadUtils;
 import java.util.List;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
@@ -61,9 +63,15 @@ final class ApplicationMain implements Callable<Integer> {
                 NodeGlobalState.INST.addNode(seedHostInfo);
             }
 
-            Thread gossipThread = GossipScheduledTask.createThread();
+            Thread statusTrackerThread =
+                    ThreadUtils.createDaemonThread(
+                            "node-status-tracker", new NodeStatusTrackerTask());
+            Thread gossipThread =
+                    ThreadUtils.createDaemonThread(
+                            "gossip-periodic-task", new GossipPeriodicTask());
 
             if (startGossipConversation) {
+                statusTrackerThread.start();
                 gossipThread.start();
             }
 

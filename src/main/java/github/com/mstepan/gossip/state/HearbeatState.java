@@ -17,4 +17,8 @@ public record HearbeatState(long generation, long version) {
     public HearbeatState next() {
         return new HearbeatState(Instant.now().getEpochSecond(), version + 1);
     }
+
+    public long calculateDelta(long curTimeEpoch) {
+        return curTimeEpoch - generation;
+    }
 }
