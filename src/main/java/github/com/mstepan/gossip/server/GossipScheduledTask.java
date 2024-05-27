@@ -93,9 +93,9 @@ public class GossipScheduledTask implements Runnable {
             GossipMessage ack2MessageRequest =
                     GossipMessage.newBuilder().setAck2(Ack2.newBuilder().build()).build();
 
-            client.sendSynMessage(ack2MessageRequest);
+            client.sendAck2Message(ack2MessageRequest);
 
-            System.out.printf("Gossip conversation OK with host: %s%n", singleNode);
+            System.out.printf("Gossip conversation COMPLETED with host: %s%n", singleNode);
 
         } catch (Exception ex) {
             System.out.printf("Gossip conversation FAILED with host: %s%n", singleNode);

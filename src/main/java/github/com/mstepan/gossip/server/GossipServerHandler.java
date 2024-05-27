@@ -14,11 +14,11 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-final class GossipConversationHandler implements Runnable {
+final class GossipServerHandler implements Runnable {
 
     private final Socket clientSocket;
 
-    public GossipConversationHandler(Socket clientSocket) {
+    public GossipServerHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
     }
 
@@ -28,16 +28,12 @@ final class GossipConversationHandler implements Runnable {
             try (DataInputStream in = NetworkUtils.socketInputStream(clientSocket);
                     DataOutputStream out = NetworkUtils.socketOutputStream(clientSocket)) {
 
-                System.out.printf("Gossip conversation started%n");
-
                 int dataLength = in.readInt();
 
                 byte[] rawData = new byte[dataLength];
                 in.readNBytes(rawData, 0, rawData.length);
 
                 GossipMessage request = GossipMessage.newBuilder().mergeFrom(rawData).build();
-
-                System.out.printf("Gossip message received%n");
 
                 if (request.hasSyn()) {
                     // handle SYN request
@@ -87,7 +83,7 @@ final class GossipConversationHandler implements Runnable {
 
     private void printDigest(String messageType, List<DigestLine> digest) {
         System.out.printf(
-                "========================= %s Digest received=========================%n",
+                "========================= %s digest received=========================%n",
                 messageType);
         for (DigestLine digestLine : digest) {
             System.out.printf("Line: %s%n", digestLine);

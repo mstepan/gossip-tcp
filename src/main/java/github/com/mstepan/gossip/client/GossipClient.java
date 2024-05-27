@@ -39,6 +39,7 @@ public class GossipClient implements AutoCloseable {
         NetworkUtils.closeSilently(socket);
     }
 
+    /** Send SYN message and read ACK as a response. */
     public GossipMessage sendSynMessage(GossipMessage request) {
         try {
             byte[] rawRequest = request.toByteArray();
@@ -51,6 +52,18 @@ public class GossipClient implements AutoCloseable {
             in.readNBytes(rawResponse, 0, rawResponse.length);
 
             return GossipMessage.newBuilder().mergeFrom(rawResponse).build();
+        } catch (IOException ioEx) {
+            throw new IllegalStateException(ioEx);
+        }
+    }
+
+    /** Send ACK2 message without reading anything back. */
+    public void sendAck2Message(GossipMessage request) {
+        try {
+            byte[] rawRequest = request.toByteArray();
+            out.writeInt(rawRequest.length);
+            out.write(rawRequest);
+            out.flush();
         } catch (IOException ioEx) {
             throw new IllegalStateException(ioEx);
         }
