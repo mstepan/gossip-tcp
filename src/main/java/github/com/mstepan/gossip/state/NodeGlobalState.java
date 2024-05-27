@@ -35,7 +35,8 @@ public enum NodeGlobalState {
                 new EndpointState(
                         hostInfo,
                         new HearbeatState(Instant.now().getEpochSecond(), 0),
-                        new ApplicationState(ApplicationState.AppStatus.BOOTSTRAP, 0.0)));
+                        new ApplicationState(
+                                ApplicationState.AppStatus.BOOTSTRAP, Map.of("DISK_USAGE", "0%"))));
     }
 
     public synchronized void addNode(HostInfo hostInfo) {
@@ -81,7 +82,8 @@ public enum NodeGlobalState {
         // wait at least 3 gossip iterations till mark application status as NORMAL
         if (currentEndpointState.heartbeat().version() == 3L) {
             ApplicationState newAppState =
-                    new ApplicationState(ApplicationState.AppStatus.NORMAL, 50.0);
+                    new ApplicationState(
+                            ApplicationState.AppStatus.NORMAL, Map.of("DISK_USAGE", "50%"));
             newEndpointState =
                     new EndpointState(currentEndpointState.host(), newHeartbeat, newAppState);
         } else {
@@ -115,5 +117,70 @@ public enum NodeGlobalState {
         }
 
         return digest;
+    }
+
+    public synchronized List<DigestLine> updateState(List<DigestLine> digestData) {
+
+        List<DigestLine> newerDigestWithMetadata = new ArrayList<>();
+
+        for (DigestLine receivedDigestLine : digestData) {
+            String endpointKey =
+                    "%s:%d".formatted(receivedDigestLine.getHost(), receivedDigestLine.getPort());
+
+            Map<String, String> receivedMetadata =
+                    new HashMap<>(receivedDigestLine.getMetadataMap());
+
+            EndpointState endpointState = endpoints.get(endpointKey);
+
+            if (endpointState == null) {
+                EndpointState newState =
+                        new EndpointState(
+                                new HostInfo(
+                                        receivedDigestLine.getHost(),
+                                        receivedDigestLine.getPort(),
+                                        HostType.NORMAL),
+                                new HearbeatState(
+                                        receivedDigestLine.getGeneration(),
+                                        receivedDigestLine.getHeartbeat()),
+                                new ApplicationState(
+                                        ApplicationState.AppStatus.NORMAL, receivedMetadata));
+
+                endpoints.put(endpointKey, newState);
+            } else {
+                DigestLine curDigestLine = endpointState.toDigestFull();
+
+                int cmpRes =
+                        DigestDiffCalculator.GENERATION_THEN_HEARTBEAT_ASC.compare(
+                                curDigestLine, receivedDigestLine);
+
+                // cur digest is older, so update with a new state from received digest
+                if (cmpRes < 0) {
+                    EndpointState newState =
+                            new EndpointState(
+                                    endpointState.host(),
+                                    new HearbeatState(
+                                            receivedDigestLine.getGeneration(),
+                                            receivedDigestLine.getHeartbeat()),
+                                    new ApplicationState(
+                                            ApplicationState.AppStatus.NORMAL, receivedMetadata));
+
+                    endpoints.put(endpointKey, newState);
+                }
+            }
+        }
+
+        return newerDigestWithMetadata;
+    }
+
+    public synchronized void printState() {
+        for (EndpointState endpointState : endpoints.values()) {
+            System.out.println(
+                    "===================================================================");
+            System.out.printf("Host: %s%n", endpointState.host().hostAndPort());
+            System.out.printf("Heartbeat: %s%n", endpointState.heartbeat());
+            System.out.printf("Application state: %s%n", endpointState.application());
+            System.out.println(
+                    "===================================================================");
+        }
     }
 }

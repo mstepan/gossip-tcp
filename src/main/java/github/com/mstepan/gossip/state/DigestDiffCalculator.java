@@ -12,7 +12,7 @@ public final class DigestDiffCalculator {
     private static final Comparator<DigestLine> HOST_PORT_ASC =
             Comparator.comparing(DigestLine::getHost).thenComparingInt(DigestLine::getPort);
 
-    private static final Comparator<DigestLine> GENERATION_THEN_HEARTBEAT_ASC =
+    public static final Comparator<DigestLine> GENERATION_THEN_HEARTBEAT_ASC =
             Comparator.comparingLong(DigestLine::getGeneration)
                     .thenComparingLong(DigestLine::getHeartbeat);
 

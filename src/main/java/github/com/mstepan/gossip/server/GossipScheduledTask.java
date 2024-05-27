@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 public class GossipScheduledTask implements Runnable {
 
     /** The initial delay before we start sending gossip messages to other nodes. */
-    private static final long INITIAL_DELAY_IN_MS = 10_000L;
+    private static final long INITIAL_DELAY_IN_MS = 5_000L;
 
     /** Number of host that will be used for a single gossip cycle. */
     private static final int HOST_GOSSIP_COUNT = 3;
@@ -51,6 +51,7 @@ public class GossipScheduledTask implements Runnable {
 
                 for (HostInfo singleNode : peersToGossip) {
                     startGossipConversation(singleNode, nodeGlobalStateSnapshot);
+                    NodeGlobalState.INST.printState();
                 }
 
                 TimeUnit.MILLISECONDS.sleep(GOSSIP_CYCLE_PERIOD_IN_MS);
@@ -87,7 +88,7 @@ public class GossipScheduledTask implements Runnable {
             GossipMessage synMessageRequest =
                     GossipMessage.newBuilder().setSyn(synBuilder.build()).build();
 
-            // Send SYN message
+            // Send SYN message, receive ACK response
             GossipMessage synResponse = client.sendSynMessage(synMessageRequest);
 
             if (!synResponse.hasAck()) {
@@ -95,24 +96,27 @@ public class GossipScheduledTask implements Runnable {
                         "SYN message returned incorrect response. Expected ACK.");
             }
 
-            // TODO: handle ACK message here, merge all required info, add request info to response
-
             Ack ackResponse = synResponse.getAck();
 
-            System.out.println("============= ACK received ============== ");
-            for (DigestLine digestLine : ackResponse.getDigestsList()) {
-                System.out.println(digestLine);
-            }
+            List<DigestLine> digestWithMetadata =
+                    NodeGlobalState.INST.updateState(ackResponse.getDigestsList());
 
             // Send ACK2 message
+            Ack2.Builder ack2Builder = Ack2.newBuilder();
+
+            for (DigestLine line : digestWithMetadata) {
+                ack2Builder.addDigests(line);
+            }
+
             GossipMessage ack2MessageRequest =
-                    GossipMessage.newBuilder().setAck2(Ack2.newBuilder().build()).build();
+                    GossipMessage.newBuilder().setAck2(ack2Builder.build()).build();
 
             client.sendAck2Message(ack2MessageRequest);
 
             System.out.printf("Gossip conversation COMPLETED with host: %s%n", singleNode);
 
         } catch (Exception ex) {
+            ex.printStackTrace();
             System.out.printf("Gossip conversation FAILED with host: %s%n", singleNode);
         }
     }

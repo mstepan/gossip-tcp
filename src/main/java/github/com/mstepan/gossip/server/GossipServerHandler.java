@@ -70,9 +70,9 @@ final class GossipServerHandler implements Runnable {
                 } else if (request.hasAck2()) {
                     // handle ACK2
                     Ack2 ack2Message = request.getAck2();
-                    printDigest("ACK2", ack2Message.getDigestsList());
+                    //                    printDigest("ACK2", ack2Message.getDigestsList());
 
-                    // TODO:
+                    NodeGlobalState.INST.updateState(ack2Message.getDigestsList());
                 } else {
                     System.out.println("Undefined request received");
                 }
