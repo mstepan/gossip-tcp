@@ -26,5 +26,16 @@ phase to format code properly.
 ## References
 
 
+## Backlog
+
+* Add `sl4j/logback` as logger instead of `System.out/System.err`
+* Add unique node ID to logs
+* Add proper unit and integration testing
+* Add jacoco code coverage
+* Add `Architecture Decision Record` folder with most important decisions
+* Add performance testing using JMH or k6
+* Create scripts to start cluster with many nodes and appropriate logging
+
+
 
 
